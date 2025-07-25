@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio Digital - Faça seu Pedido</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1><i class="fas fa-utensils"></i> Cardápio Digital</h1>
+            <div class="cart-summary">
+                <button id="cart-btn" class="cart-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count">0</span> itens - R$ <span id="cart-total">0,00</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Menu Section -->
+            <section class="menu-section">
+                <h2>Nosso Cardápio</h2>
+                <div class="menu-categories">
+                    <button class="category-btn active" data-category="all">Todos</button>
+                    <button class="category-btn" data-category="pratos">Pratos Principais</button>
+                    <button class="category-btn" data-category="acompanhamentos">Acompanhamentos</button>
+                    <button class="category-btn" data-category="bebidas">Bebidas</button>
+                </div>
+                <div class="menu-grid" id="menu-grid">
+                    <!-- Menu items will be loaded by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Cart Section -->
+            <section class="cart-section" id="cart-section" style="display: none;">
+                <div class="modal-overlay" id="cart-overlay"></div>
+                <div class="cart-content">
+                    <div class="cart-header">
+                        <h2><i class="fas fa-shopping-cart"></i> Seu Pedido</h2>
+                        <button id="close-cart" class="close-btn">&times;</button>
+                    </div>
+                    <div class="cart-items" id="cart-items">
+                        <!-- Cart items will be loaded by JavaScript -->
+                    </div>
+                    <div class="cart-footer">
+                        <div class="cart-total">
+                            <strong>Total: R$ <span id="final-total">0,00</span></strong>
+                        </div>
+                        <button id="checkout-btn" class="checkout-btn">Finalizar Pedido</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Checkout Form -->
+            <section class="checkout-section" id="checkout-section" style="display: none;">
+                <div class="modal-overlay" id="checkout-overlay"></div>
+                <div class="checkout-content">
+                    <div class="checkout-header">
+                        <h2><i class="fas fa-clipboard-list"></i> Dados do Pedido</h2>
+                        <button id="back-to-cart" class="back-btn">
+                            <i class="fas fa-arrow-left"></i> Voltar ao Carrinho
+                        </button>
+                    </div>
+                    <form id="checkout-form" class="checkout-form">
+                    <div class="form-group">
+                        <label for="customer-name">Nome Completo *</label>
+                        <input type="text" id="customer-name" name="customerName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customer-phone">Celular (WhatsApp) *</label>
+                        <input type="tel" id="customer-phone" name="customerPhone" placeholder="(11) 99999-9999" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="delivery-address">Endereço de Entrega *</label>
+                        <textarea id="delivery-address" name="deliveryAddress" rows="3" placeholder="Rua, número, bairro, CEP, complemento..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="delivery-type">Tipo de Atendimento *</label>
+                        <select id="delivery-type" name="deliveryType" required>
+                            <option value="entrega">Entrega</option>
+                            <option value="retirada">Retirada</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="delivery-fee-group">
+                        <label for="delivery-fee">Taxa de Entrega</label>
+                        <input type="number" id="delivery-fee" name="deliveryFee" step="0.01" min="0" value="5.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="payment-method">Forma de Pagamento *</label>
+                        <select id="payment-method" name="paymentMethod" required>
+                            <option value="">Selecione...</option>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="cartao">Cartão</option>
+                            <option value="pix">PIX</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="discount-value">Desconto</label>
+                        <div class="discount-container">
+                            <select id="discount-type" name="discountType">
+                                <option value="percent">%</option>
+                                <option value="fixed">R$</option>
+                            </select>
+                            <input type="number" id="discount-value" name="discountValue" step="0.01" min="0" value="0" placeholder="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="order-notes">Observações</label>
+                        <textarea id="order-notes" name="orderNotes" rows="2" placeholder="Alguma observação especial..."></textarea>
+                    </div>
+                    
+                    <div class="order-summary">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span>R$ <span id="subtotal">0,00</span></span>
+                        </div>
+                        <div class="summary-row" id="discount-row" style="display: none;">
+                            <span>Desconto (<span id="discount-percent-display">0</span>):</span>
+                            <span style="color: #28a745;">- R$ <span id="discount-amount">0,00</span></span>
+                        </div>
+                        <div class="summary-row" id="delivery-fee-row">
+                            <span>Taxa de Entrega:</span>
+                            <span>R$ <span id="delivery-fee-display">5,00</span></span>
+                        </div>
+                        <div class="summary-row total-row">
+                            <span>Total Final:</span>
+                            <span>R$ <span id="order-total">5,00</span></span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="confirm-order-btn">
+                        <i class="fas fa-check"></i> Confirmar Pedido
+                    </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Order Confirmed -->
+            <section class="order-confirmed" id="order-confirmed" style="display: none;">
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i>
+                    <h2>Pedido Confirmado!</h2>
+                    <p>Seu pedido foi registrado com sucesso.</p>
+                </div>
+                
+                <div class="order-actions">
+                    <button id="print-order" class="print-btn">
+                        <i class="fas fa-print"></i> Imprimir Comanda
+                    </button>
+                    <button id="new-order" class="new-order-btn">
+                        <i class="fas fa-plus"></i> Novo Pedido
+                    </button>
+                </div>
+                
+                <!-- Order Details for Print -->
+                <div class="order-details" id="order-details">
+                    <!-- Order details will be populated by JavaScript -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Print Styles -->
+    <div class="print-area" id="print-area" style="display: none;">
+        <!-- Content for printing will be populated by JavaScript -->
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
