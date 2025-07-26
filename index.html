@@ -11,7 +11,7 @@
     <!-- Header -->
     <header class="header">
         <div class="container">
-            <h1><i class="fas fa-utensils"></i> Cardápio Digital</h1>
+            <h1><i class="fas fa-utensils"></i> D'Casa & Cia Assados</h1>
             <div class="cart-summary">
                 <button id="cart-btn" class="cart-btn">
                     <i class="fas fa-shopping-cart"></i>
@@ -20,6 +20,12 @@
             </div>
         </div>
     </header>
+
+    <!-- Floating Cart Button -->
+    <button id="floating-cart" class="floating-cart empty">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="floating-cart-text">Carrinho Vazio</span>
+    </button>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -130,7 +136,7 @@
                         </div>
                         <div class="summary-row" id="discount-row" style="display: none;">
                             <span>Desconto (<span id="discount-percent-display">0</span>):</span>
-                            <span style="color: #28a745;">- R$ <span id="discount-amount">0,00</span></span>
+                            <span style="color: #dc3545;">- R$ <span id="discount-amount">0,00</span></span>
                         </div>
                         <div class="summary-row" id="delivery-fee-row">
                             <span>Taxa de Entrega:</span>
@@ -149,26 +155,34 @@
                 </div>
             </section>
 
-            <!-- Order Confirmed -->
+            <!-- Order Confirmed - Modal -->
             <section class="order-confirmed" id="order-confirmed" style="display: none;">
-                <div class="success-message">
-                    <i class="fas fa-check-circle"></i>
-                    <h2>Pedido Confirmado!</h2>
-                    <p>Seu pedido foi registrado com sucesso.</p>
-                </div>
-                
-                <div class="order-actions">
-                    <button id="print-order" class="print-btn">
-                        <i class="fas fa-print"></i> Imprimir Comanda
-                    </button>
-                    <button id="new-order" class="new-order-btn">
-                        <i class="fas fa-plus"></i> Novo Pedido
-                    </button>
-                </div>
-                
-                <!-- Order Details for Print -->
-                <div class="order-details" id="order-details">
-                    <!-- Order details will be populated by JavaScript -->
+                <div class="modal-overlay" id="order-overlay"></div>
+                <div class="order-content">
+                    <div class="order-header">
+                        <h2><i class="fas fa-check-circle"></i> Pedido Confirmado!</h2>
+                        <button id="close-order" class="close-btn">&times;</button>
+                    </div>
+                    
+                    <div class="order-body">
+                        <div class="success-message">
+                            <p>Seu pedido foi registrado com sucesso e está pronto para impressão!</p>
+                        </div>
+                        
+                        <div class="order-actions">
+                            <button id="print-order" class="print-btn">
+                                <i class="fas fa-print"></i> Imprimir Comanda
+                            </button>
+                            <button id="new-order" class="new-order-btn">
+                                <i class="fas fa-plus"></i> Novo Pedido
+                            </button>
+                        </div>
+                        
+                        <!-- Order Details for Print -->
+                        <div class="order-details" id="order-details">
+                            <!-- Order details will be populated by JavaScript -->
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>

@@ -86,9 +86,8 @@ const menuGrid = document.getElementById('menu-grid');
 const cartSection = document.getElementById('cart-section');
 const checkoutSection = document.getElementById('checkout-section');
 const orderConfirmed = document.getElementById('order-confirmed');
-const cartBtn = document.getElementById('cart-btn');
-const cartCount = document.getElementById('cart-count');
-const cartTotal = document.getElementById('cart-total');
+const floatingCart = document.getElementById('floating-cart');
+const floatingCartText = document.getElementById('floating-cart-text');
 const cartItems = document.getElementById('cart-items');
 const finalTotal = document.getElementById('final-total');
 
@@ -109,8 +108,8 @@ function setupEventListeners() {
         });
     });
 
-    // Botão do carrinho
-    cartBtn.addEventListener('click', showCart);
+    // Carrinho flutuante
+    floatingCart.addEventListener('click', showCart);
 
     // Fechar carrinho
     document.getElementById('close-cart').addEventListener('click', hideCart);
@@ -181,6 +180,16 @@ function setupEventListeners() {
     document.getElementById('print-order').addEventListener('click', printOrder);
     document.getElementById('new-order').addEventListener('click', startNewOrder);
 
+    // Fechar tela de pedido confirmado
+    document.getElementById('close-order').addEventListener('click', function() {
+        hideAllSections();
+    });
+
+    // Fechar clicando fora da tela de pedido
+    document.getElementById('order-overlay').addEventListener('click', function() {
+        hideAllSections();
+    });
+
     // Fechar modais com ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -188,6 +197,8 @@ function setupEventListeners() {
                 hideCart();
             } else if (checkoutSection.style.display === 'block') {
                 hideCheckout();
+            } else if (orderConfirmed.style.display === 'block') {
+                hideAllSections();
             }
         }
     });
@@ -253,10 +264,16 @@ function updateCartDisplay() {
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    cartCount.textContent = totalItems;
-    cartTotal.textContent = totalPrice.toFixed(2).replace('.', ',');
-    finalTotal.textContent = totalPrice.toFixed(2).replace('.', ',');
+    // Atualizar carrinho flutuante
+    if (totalItems === 0) {
+        floatingCart.className = 'floating-cart empty';
+        floatingCartText.textContent = 'Carrinho Vazio';
+    } else {
+        floatingCart.className = 'floating-cart';
+        floatingCartText.innerHTML = `${totalItems} ${totalItems === 1 ? 'item' : 'itens'} - R$ ${totalPrice.toFixed(2).replace('.', ',')}`;
+    }
 
+    finalTotal.textContent = totalPrice.toFixed(2).replace('.', ',');
     renderCartItems();
 }
 
@@ -446,6 +463,14 @@ function showOrderConfirmation() {
     
     const orderDetails = document.getElementById('order-details');
     orderDetails.innerHTML = createOrderDetailsHTML();
+    
+    // Scroll para o topo da tela de pedido
+    setTimeout(() => {
+        const orderBody = document.querySelector('.order-body');
+        if (orderBody) {
+            orderBody.scrollTop = 0;
+        }
+    }, 100);
 }
 
 // Criar HTML dos detalhes do pedido
@@ -491,7 +516,7 @@ function createOrderDetailsHTML() {
             ${currentOrder.pricing.discountValue > 0 ? `
                 <div class="summary-row">
                     <span>Desconto (${currentOrder.pricing.discountDisplay}):</span>
-                    <span style="color: #28a745;">- R$ ${currentOrder.pricing.discountAmount.toFixed(2).replace('.', ',')}</span>
+                    <span style="color: #dc3545;">- R$ ${currentOrder.pricing.discountAmount.toFixed(2).replace('.', ',')}</span>
                 </div>
             ` : ''}
             ${currentOrder.delivery.type === 'entrega' ? `
@@ -531,7 +556,7 @@ function printOrder() {
 function createPrintHTML() {
     return `
         <div class="print-header">
-            <h1>CARDAPIO DIGITAL</h1>
+            <h1>D'CASA & CIA ASSADOS</h1>
             <p>COMANDA DE PEDIDO</p>
             <p>================================</p>
         </div>
@@ -639,7 +664,7 @@ function showToast(message) {
         position: fixed;
         top: 100px;
         right: 20px;
-        background: #28a745;
+        background: #dc3545;
         color: white;
         padding: 15px 25px;
         border-radius: 8px;

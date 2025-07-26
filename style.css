@@ -20,10 +20,10 @@ body {
 
 /* Header */
 .header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
     color: white;
     padding: 1rem 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -42,23 +42,54 @@ body {
 
 .header h1 i {
     margin-right: 10px;
-    color: #ffd700;
+    color: #fff;
 }
 
-.cart-btn {
-    background: rgba(255,255,255,0.2);
-    border: 2px solid rgba(255,255,255,0.3);
+/* Carrinho flutuante */
+.floating-cart {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999;
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
     color: white;
-    padding: 10px 20px;
-    border-radius: 25px;
+    border: none;
+    border-radius: 50px;
+    padding: 15px 25px;
     cursor: pointer;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
     transition: all 0.3s ease;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 16px;
+    min-width: 180px;
+    animation: pulse 2s infinite;
 }
 
-.cart-btn:hover {
-    background: rgba(255,255,255,0.3);
-    transform: translateY(-2px);
+.floating-cart:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 35px rgba(220, 53, 69, 0.6);
+}
+
+.floating-cart.empty {
+    background: #333;
+    cursor: not-allowed;
+    animation: none;
+}
+
+.floating-cart.empty:hover {
+    transform: none;
+    box-shadow: 0 8px 25px rgba(51, 51, 51, 0.4);
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4); }
+    50% { box-shadow: 0 8px 25px rgba(220, 53, 69, 0.8); }
+    100% { box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4); }
+}
+
+/* Esconder carrinho original do header */
+.cart-btn {
+    display: none;
 }
 
 /* Main Content */
@@ -85,9 +116,9 @@ body {
 
 .category-btn {
     padding: 10px 25px;
-    border: 2px solid #667eea;
+    border: 2px solid #dc3545;
     background: white;
-    color: #667eea;
+    color: #dc3545;
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -96,7 +127,7 @@ body {
 
 .category-btn:hover,
 .category-btn.active {
-    background: #667eea;
+    background: #dc3545;
     color: white;
     transform: translateY(-2px);
 }
@@ -120,7 +151,7 @@ body {
 .menu-item:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    border-color: #667eea;
+    border-color: #dc3545;
 }
 
 .menu-item h3 {
@@ -139,14 +170,14 @@ body {
 .menu-item .price {
     font-size: 1.4rem;
     font-weight: 700;
-    color: #667eea;
+    color: #dc3545;
     margin-bottom: 1rem;
 }
 
 .add-to-cart-btn {
     width: 100%;
     padding: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -157,7 +188,7 @@ body {
 
 .add-to-cart-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
 }
 
 /* Cart Section - Modal Popup */
@@ -165,15 +196,16 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
     z-index: 1000;
     display: flex;
     justify-content: center;
     align-items: center;
     backdrop-filter: blur(5px);
     animation: fadeIn 0.3s ease;
+    overflow: hidden;
 }
 
 .cart-content {
@@ -185,10 +217,12 @@ body {
     max-height: 80vh;
     overflow: hidden;
     animation: slideUp 0.3s ease;
+    position: relative;
+    margin: auto;
 }
 
 .cart-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
     color: white;
     padding: 1.5rem;
     display: flex;
@@ -230,7 +264,7 @@ body {
 }
 
 .cart-items::-webkit-scrollbar-thumb {
-    background: #667eea;
+    background: #dc3545;
     border-radius: 3px;
 }
 
@@ -253,7 +287,7 @@ body {
 }
 
 .item-info .item-price {
-    color: #667eea;
+    color: #dc3545;
     font-weight: 600;
 }
 
@@ -266,9 +300,9 @@ body {
 .quantity-btn {
     width: 35px;
     height: 35px;
-    border: 2px solid #667eea;
+    border: 2px solid #dc3545;
     background: white;
-    color: #667eea;
+    color: #dc3545;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
@@ -279,7 +313,7 @@ body {
 }
 
 .quantity-btn:hover {
-    background: #667eea;
+    background: #dc3545;
     color: white;
 }
 
@@ -305,7 +339,7 @@ body {
 .checkout-btn {
     width: 100%;
     padding: 15px;
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -317,7 +351,7 @@ body {
 
 .checkout-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
 }
 
 /* Checkout Section - Modal Popup */
@@ -325,15 +359,16 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
     z-index: 1000;
     display: flex;
     justify-content: center;
     align-items: center;
     backdrop-filter: blur(5px);
     animation: fadeIn 0.3s ease;
+    overflow: hidden;
 }
 
 .checkout-content {
@@ -345,10 +380,12 @@ body {
     max-height: 90vh;
     overflow: hidden;
     animation: slideUp 0.3s ease;
+    position: relative;
+    margin: auto;
 }
 
 .checkout-header {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    background: linear-gradient(135deg, #333 0%, #000 100%);
     color: white;
     padding: 1.5rem;
     display: flex;
@@ -392,7 +429,7 @@ body {
 }
 
 .checkout-form::-webkit-scrollbar-thumb {
-    background: #28a745;
+    background: #dc3545;
     border-radius: 3px;
 }
 
@@ -423,7 +460,7 @@ body {
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #dc3545;
 }
 
 .form-group select {
@@ -473,7 +510,7 @@ body {
 .confirm-order-btn {
     width: 100%;
     padding: 15px;
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -485,38 +522,74 @@ body {
 
 .confirm-order-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
 }
 
-/* Order Confirmed */
+/* Order Confirmed - Modal */
 .order-confirmed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+    overflow: hidden;
+}
+
+.order-content {
     background: white;
     border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    margin: 2rem 0;
-    padding: 3rem 2rem;
-    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-width: 700px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+    position: relative;
+    margin: auto;
+}
+
+.order-header {
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.order-body {
+    padding: 2rem;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
 .success-message {
+    text-align: center;
     margin-bottom: 2rem;
-}
-
-.success-message i {
-    font-size: 4rem;
-    color: #28a745;
-    margin-bottom: 1rem;
-}
-
-.success-message h2 {
-    font-size: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border: 2px solid #dc3545;
+    border-radius: 8px;
     color: #333;
-    margin-bottom: 0.5rem;
 }
 
 .success-message p {
-    color: #666;
+    margin: 0;
     font-size: 1.1rem;
+    font-weight: 500;
 }
 
 .order-actions {
@@ -538,12 +611,12 @@ body {
 }
 
 .print-btn {
-    background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+    background: linear-gradient(135deg, #333 0%, #000 100%);
     color: white;
 }
 
 .new-order-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
     color: white;
 }
 
@@ -575,7 +648,7 @@ body {
 }
 
 .info-group h4 {
-    color: #667eea;
+    color: #dc3545;
     margin-bottom: 0.5rem;
     font-size: 1rem;
 }
@@ -640,7 +713,8 @@ body {
 
     /* Modal responsivo em mobile */
     .cart-content,
-    .checkout-content {
+    .checkout-content,
+    .order-content {
         width: 95%;
         max-height: 90vh;
     }
@@ -651,6 +725,19 @@ body {
 
     .checkout-form {
         max-height: 60vh;
+    }
+
+    .order-body {
+        max-height: 70vh;
+    }
+
+    /* Carrinho flutuante em mobile */
+    .floating-cart {
+        bottom: 15px;
+        right: 15px;
+        padding: 12px 20px;
+        font-size: 14px;
+        min-width: 160px;
     }
     
     .order-actions {
@@ -770,11 +857,11 @@ body {
 
 /* Close modal when clicking outside */
 .modal-overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     z-index: -1;
 }
 
