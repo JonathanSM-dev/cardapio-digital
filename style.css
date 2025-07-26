@@ -29,6 +29,81 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --shadow-red: 0 10px 15px -3px rgba(220, 38, 38, 0.2), 0 4px 6px -2px rgba(220, 38, 38, 0.1);
+    
+    /* === VARIÁVEIS MODERNAS 2024 === */
+    /* Cores de Estado */
+    --success-50: #ecfdf5;
+    --success-500: #10b981;
+    --success-600: #059669;
+    
+    --warning-50: #fffbeb;
+    --warning-500: #f59e0b;
+    --warning-600: #d97706;
+    
+    --error-50: #fef2f2;
+    --error-500: #ef4444;
+    --error-600: #dc2626;
+    
+    --info-50: #eff6ff;
+    --info-500: #3b82f6;
+    --info-600: #2563eb;
+    
+    /* Tipografia Moderna */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    --font-display: 'Poppins', var(--font-primary);
+    
+    /* Espaçamentos Sistemáticos */
+    --space-1: 0.25rem;    /* 4px */
+    --space-2: 0.5rem;     /* 8px */
+    --space-3: 0.75rem;    /* 12px */
+    --space-4: 1rem;       /* 16px */
+    --space-5: 1.25rem;    /* 20px */
+    --space-6: 1.5rem;     /* 24px */
+    --space-8: 2rem;       /* 32px */
+    --space-10: 2.5rem;    /* 40px */
+    --space-12: 3rem;      /* 48px */
+    --space-16: 4rem;      /* 64px */
+    
+    /* Bordas e Raios Modernos */
+    --radius-none: 0;
+    --radius-sm: 0.375rem;   /* 6px */
+    --radius-md: 0.5rem;     /* 8px */
+    --radius-lg: 0.75rem;    /* 12px */
+    --radius-xl: 1rem;       /* 16px */
+    --radius-2xl: 1.5rem;    /* 24px */
+    --radius-full: 9999px;
+    
+    /* Transições Suaves */
+    --transition-fast: 150ms ease-in-out;
+    --transition-normal: 250ms ease-in-out;
+    --transition-slow: 350ms ease-in-out;
+    
+    /* Z-index Scale */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-toast: 1080;
+    
+    /* Breakpoints (para uso em calc()) */
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+}
+
+/* === ESTILOS ESPECÍFICOS PARA DASHBOARD - ÚLTIMOS PEDIDOS === */
+.dashboard-order-item {
+    transition: all var(--transition-normal);
+}
+
+.dashboard-order-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 /* Reset e Base Styles */
@@ -320,38 +395,78 @@ body {
     border: 1px solid var(--gray-200);
 }
 
+/* === SEÇÃO MAIS OPÇÕES === */
+.more-section {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    min-height: 80vh;
+}
+
+.more-section h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--gray-800);
+    font-size: 2rem;
+    font-weight: 700;
+    position: relative;
+}
+
+.more-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: var(--primary-red);
+    border-radius: 2px;
+}
+
 /* Sub-navigation for More section */
 .sub-nav {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    border-bottom: 2px solid var(--gray-200);
-    background: var(--white);
-    border-radius: 8px 8px 0 0;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 2rem auto;
+    background: var(--gray-50);
+    border-radius: 12px;
     padding: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--gray-200);
+    max-width: 600px;
 }
 
 .sub-nav-btn {
     background: transparent;
     border: none;
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     cursor: pointer;
     font-weight: 600;
     color: var(--gray-600);
-    border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
-    border-radius: 6px;
+    border-radius: 8px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    justify-content: center;
+    position: relative;
 }
 
 .sub-nav-btn:hover {
     color: var(--primary-red);
-    background: rgba(220, 38, 38, 0.05);
+    background: rgba(220, 38, 38, 0.1);
+    transform: translateY(-1px);
 }
 
 .sub-nav-btn.active {
-    color: var(--primary-red);
-    border-bottom-color: var(--primary-red);
-    background: rgba(220, 38, 38, 0.1);
+    color: white;
+    background: var(--primary-red);
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 }
 
 .sub-section {
@@ -360,6 +475,62 @@ body {
 
 .sub-section.active {
     display: block;
+    padding: 1rem 0;
+    margin-top: 1rem;
+}
+
+/* Responsividade para sub-navegação */
+@media (max-width: 768px) {
+    .more-section {
+        max-width: none;
+        padding: 0 1rem;
+        min-height: auto;
+    }
+    
+    .more-section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .sub-nav {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        max-width: none;
+        margin: 1.5rem 0;
+    }
+    
+    .sub-nav-btn {
+        flex: none;
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+    }
+    
+    .sub-section.active {
+        padding: 0.5rem 0;
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .more-section {
+        padding: 0 0.5rem;
+    }
+    
+    .more-section h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .sub-nav {
+        padding: 0.5rem;
+        margin: 1rem 0;
+    }
+    
+    .sub-nav-btn {
+        padding: 0.8rem;
+    }
 }
 
 /* Carrinho flutuante */
@@ -1025,6 +1196,241 @@ body {
     border-bottom: none;
 }
 
+/* ===== CSS DE IMPRESSÃO OTIMIZADO ===== */
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+  
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 12px;
+    line-height: 1.3;
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  /* Oculta todos os elementos não relacionados à impressão */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Mostra apenas o recibo */
+  .receipt,
+  .receipt * {
+    visibility: visible;
+  }
+  
+  .receipt {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    page-break-inside: avoid;
+    page-break-after: avoid;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  .receipt-header {
+    text-align: center;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #000;
+    padding-bottom: 5px;
+  }
+  
+  .receipt-items {
+    margin: 10px 0;
+  }
+  
+  .receipt-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 3px 0;
+    font-size: 11px;
+  }
+  
+  .receipt-total {
+    border-top: 1px dashed #000;
+    padding-top: 5px;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  
+  /* Elementos do recibo devem ser compactos */
+  .receipt-header,
+  .receipt-info,
+  .receipt-items,
+  .receipt-total {
+    page-break-inside: avoid;
+    margin-bottom: 8px !important;
+  }
+  
+  /* Evitar quebras desnecessárias */
+  .receipt-item {
+    page-break-inside: avoid;
+    margin: 2px 0 !important;
+  }
+  
+  /* Compactar espaçamentos */
+  .receipt * {
+    margin-top: 0 !important;
+    margin-bottom: 3px !important;
+  }
+  
+  /* Estilizar elementos específicos do recibo */
+  .receipt h2 {
+    font-size: 16px;
+    margin: 5px 0;
+  }
+  
+  .receipt h3 {
+    font-size: 14px;
+    margin: 3px 0;
+  }
+  
+  .receipt p {
+    margin: 2px 0;
+    font-size: 11px;
+  }
+  
+  .receipt strong {
+    font-weight: bold;
+  }
+  
+  /* Otimizar espaçamento */
+  .receipt > * {
+    margin-bottom: 5px;
+  }
+  
+  .receipt > *:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* ===== ESTILOS PARA MELHORIAS DOS ÚLTIMOS PEDIDOS ===== */
+.customer-name {
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.order-items-detail {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.9em;
+  border-left: 3px solid #dc3545;
+}
+
+.items-list {
+  margin: 5px 0 0 0;
+  padding-left: 20px;
+  list-style-type: none;
+}
+
+.items-list li {
+  margin: 2px 0;
+  padding: 2px 0;
+  position: relative;
+}
+
+.items-list li::before {
+  content: "•";
+  color: #dc3545;
+  font-weight: bold;
+  position: absolute;
+  left: -15px;
+}
+
+.items-list .item-quantity {
+  font-weight: bold;
+  color: #dc3545;
+}
+
+.items-list .item-price {
+  float: right;
+  font-weight: bold;
+  color: #28a745;
+}
+
+/* Melhorar visualização dos pedidos */
+.history-item {
+  margin-bottom: 15px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.history-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.history-item-header {
+  background: white;
+  color: #2c3e50;
+  padding: 12px 15px;
+  border-bottom: 2px solid #dc3545;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.order-number {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #2c3e50;
+}
+
+.history-item-header .customer-name {
+  color: #495057;
+}
+
+.history-item-header .order-time {
+  color: #6c757d;
+}
+
+.history-item-header .delivery-info {
+  color: #495057;
+}
+
+.history-item-header .order-total {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.delivery-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 0.9em;
+}
+
+.delivery-icon {
+  font-size: 1.2em;
+  color: #2c3e50;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
@@ -1140,87 +1546,31 @@ body {
     }
 }
 
-/* Print Styles - Otimizado para EPSON TM-T20X (80mm) */
-@media print {
-    @page {
-        size: 80mm auto;
-        margin: 0;
+/* === RESPONSIVIDADE BACKUP STATS === */
+@media (max-width: 768px) {
+    .backup-stats .stat-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        min-height: auto;
     }
     
-    body * {
-        visibility: hidden;
+    .backup-stats .stat-value {
+        max-width: none;
+        text-align: left;
     }
     
-    .print-area,
-    .print-area * {
-        visibility: visible;
-    }
-    
-    .print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 80mm;
-        background: white;
-        padding: 5mm;
-        font-family: 'Courier New', monospace;
-        font-size: 10px;
-        line-height: 1.2;
-    }
-    
-    .print-header {
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    
-    .print-header h1 {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 2px;
-    }
-    
-    .print-header p {
-        font-size: 10px;
-        margin: 1px 0;
-    }
-    
-    .print-info {
-        margin-bottom: 10px;
-        font-size: 9px;
-    }
-    
-    .print-info div {
-        margin-bottom: 2px;
-        word-wrap: break-word;
-    }
-    
-    .print-items {
-        margin-bottom: 10px;
-    }
-    
-    .print-items > div:first-child {
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-    
-    .print-item {
-        margin-bottom: 3px;
-        font-size: 9px;
-    }
-    
-    .print-item div:first-child {
-        margin-bottom: 1px;
-    }
-    
-    .print-total {
-        font-size: 9px;
-        line-height: 1.4;
-    }
-    
-    .print-total div {
-        margin-bottom: 2px;
+    .backup-stats .stat-label {
+        min-width: auto;
+        font-weight: 600;
     }
 }
+
+@media (max-width: 480px) {
+    /* Responsividade mobile mantida sem alterações de fonte */
+}
+
+/* Estilos de impressão otimizados aplicados acima */
 
 /* Modal Animations */
 @keyframes fadeIn {
@@ -1255,7 +1605,8 @@ body {
 
 /* Order History */
 .order-history {
-    margin-top: 2rem;
+    margin-top: 1rem;
+    padding: 0 1rem;
 }
 
 .history-header {
@@ -1288,7 +1639,8 @@ body {
 
 .history-list {
     display: grid;
-    gap: 1rem;
+    gap: 1.5rem;
+    padding: 1rem 0;
 }
 
 .history-item {
@@ -1553,7 +1905,6 @@ body {
 }
 
 .kpi-label {
-    font-size: 0.9rem;
     color: #666;
     text-transform: uppercase;
     font-weight: 500;
@@ -1562,8 +1913,9 @@ body {
 /* Charts Grid */
 .charts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 2.5rem;
+    padding: 1rem 0;
 }
 
 .chart-container {
@@ -1614,13 +1966,14 @@ body {
 }
 
 .info-item {
-    font-size: 0.9rem;
+    /* Tamanho de fonte padrão restaurado */
 }
 
 .backup-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2.5rem;
+    padding: 1rem 0;
 }
 
 .backup-card {
@@ -1650,7 +2003,6 @@ body {
 .card-header p {
     margin: 0;
     color: #666;
-    font-size: 0.9rem;
 }
 
 .card-content {
@@ -1669,19 +2021,26 @@ body {
 .stat-item {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 0.5rem;
     padding: 0.5rem 0;
     border-bottom: 1px solid #f8f9fa;
+    min-height: 2rem;
+    gap: 1rem;
 }
 
 .stat-label {
     color: #666;
-    font-size: 0.9rem;
+    flex-shrink: 0;
+    min-width: 80px;
 }
 
-.stat-value {
+.backup-stats .stat-value {
     font-weight: 600;
     color: #333;
+    word-break: break-word;
+    max-width: 150px;
+    text-align: right;
 }
 
 /* Import Card */
@@ -1777,7 +2136,6 @@ body {
     padding: 0.75rem 1rem;
     border: none;
     border-radius: 5px;
-    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;

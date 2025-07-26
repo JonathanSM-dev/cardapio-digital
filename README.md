@@ -2,7 +2,7 @@
 
 Um web app simples e moderno para criação de cardápio digital com sistema de pedidos e impressão de comanda.
 
-## ✨ Funcionalidades
+##  Funcionalidades
 
 - **Cardápio Digital**: Visualização de itens organizados por categoria (Lanches, Bebidas, Sobremesas)
 - **Carrinho de Compras**: Adicionar/remover itens e controlar quantidades
@@ -12,7 +12,7 @@ Um web app simples e moderno para criação de cardápio digital com sistema de 
 - **Design Responsivo**: Funciona perfeitamente em desktop e mobile
 - **Interface Moderna**: Design limpo e intuitivo com boa UX
 
-## 🚀 Como Usar
+##  Como Usar
 
 ### 1. Navegação no Cardápio
 - Visualize todos os itens ou filtre por categoria usando os botões no topo
@@ -42,7 +42,7 @@ Um web app simples e moderno para criação de cardápio digital com sistema de 
 - **JavaScript Vanilla**: Funcionalidades interativas sem dependências
 - **Font Awesome**: Ícones elegantes e consistentes
 
-## 📁 Estrutura do Projeto
+##  Estrutura do Projeto
 
 ```
 cardapio-digital/
@@ -82,7 +82,7 @@ cardapio-digital/
 - Nas configurações do GitHub Pages, adicione seu domínio personalizado
 - Configure os registros DNS conforme as instruções do GitHub
 
-## 🎨 Personalização
+##  Personalização
 
 ### Modificar o Cardápio
 Edite o array `menuData` no arquivo `script.js`:
@@ -115,7 +115,7 @@ No arquivo `script.js`, procure por:
 document.getElementById('delivery-fee').value = '5.00';
 ```
 
-## 📱 Compatibilidade
+##  Compatibilidade
 
 - ✅ Chrome/Edge/Safari (versões modernas)
 - ✅ Firefox
@@ -123,7 +123,7 @@ document.getElementById('delivery-fee').value = '5.00';
 - ✅ Tablets
 - ✅ Impressão (formatação otimizada)
 
-## 🔧 Desenvolvimento Local
+##  Desenvolvimento Local
 
 1. **Clone o repositório**
    ```bash
@@ -142,7 +142,7 @@ document.getElementById('delivery-fee').value = '5.00';
    live-server
    ```
 
-## 📋 Funcionalidades Futuras (Ideias)
+##  Funcionalidades Futuras (Ideias)
 
 - [ ] Integração com WhatsApp para envio automático
 - [ ] Sistema de cupons de desconto
@@ -151,11 +151,11 @@ document.getElementById('delivery-fee').value = '5.00';
 - [ ] Integração com sistemas de pagamento
 - [ ] Notificações push
 
-## 📄 Licença
+##  Licença
 
 Este projeto é open source e está disponível sob a [Licença MIT](LICENSE).
 
-## 🤝 Contribuições
+##  Contribuições
 
 Contribuições são bem-vindas! Sinta-se livre para:
 
@@ -165,7 +165,7 @@ Contribuições são bem-vindas! Sinta-se livre para:
 4. Push para a branch (`git push origin feature/MinhaFeature`)
 5. Abrir um Pull Request
 
-## 📞 Suporte
+##  Suporte
 
 Para dúvidas ou sugestões, abra uma [issue](https://github.com/JonathanSM-dev/cardapio-digital/issues) no repositório.
 

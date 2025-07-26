@@ -1307,24 +1307,52 @@ function updateTodayOrdersPreview(orders) {
                 new Date(order.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : 
                 'N/A';
             const orderTotal = (order.pricing?.total || 0).toFixed(2);
-            const deliveryType = (order.delivery?.type === 'entrega') ? '🚚 Entrega' : '🏪 Retirada';
+            const deliveryType = (order.delivery?.type === 'entrega') ? '🏍️ Entrega' : '🏪 Retirada';
+            const customerName = order.customer?.name || 'Cliente';
+            
+            // Criar lista resumida de itens (máximo 3 itens)
+            const itemsSummary = order.items ? order.items.slice(0, 3).map(item => 
+                `${item.quantity}x ${item.name}`
+            ).join(', ') + (order.items.length > 3 ? '...' : '') : 'Sem itens';
             
             return `
-                <div class="order-preview-item" style="
-                    display: flex; 
-                    justify-content: space-between; 
-                    align-items: center; 
-                    padding: 1rem; 
-                    border-bottom: 1px solid #f0f0f0;
-                    transition: background 0.2s ease;
-                " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                    <div>
-                        <strong style="color: #2c3e50;">#${orderId}</strong>
-                        <span style="color: #6c757d; margin-left: 1rem;">${orderTime}</span>
+                <div class="dashboard-order-item" style="
+                    background: white;
+                    border: 1px solid #e9ecef;
+                    border-radius: 8px;
+                    padding: 1rem;
+                    margin-bottom: 0.5rem;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" 
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <strong style="color: #2c3e50; font-size: 0.95rem;">#${orderId}</strong>
+                                <span style="color: #6c757d; font-size: 0.85rem;">${orderTime}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                                <i class="fas fa-user" style="color: #6c757d; font-size: 0.8rem;"></i>
+                                <span style="color: #495057;">${customerName}</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 600; color: #28a745; font-size: 1rem;">R$ ${orderTotal}</div>
+                            <div style="font-size: 0.8rem; color: #6c757d;">${deliveryType}</div>
+                        </div>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 600; color: #28a745;">R$ ${orderTotal}</div>
-                        <div style="font-size: 0.8rem; color: #6c757d;">${deliveryType}</div>
+                    
+                    <div style="
+                        background: #f8f9fa;
+                        border-radius: 4px;
+                        padding: 0.5rem;
+                        font-size: 0.85rem;
+                        color: #495057;
+                        border-left: 3px solid #dc3545;
+                    ">
+                        <strong>Itens:</strong> ${itemsSummary}
                     </div>
                 </div>
             `;
@@ -2595,9 +2623,14 @@ async function renderOrderHistory() {
 
 function createHistoryItemHTML(order) {
     try {
+        // Criar lista detalhada de itens com preços
         const itemsList = order.items.map(item => 
-            `${item.quantity}x ${item.name}`
-        ).join(', ');
+            `<li>
+                <span class="item-quantity">${item.quantity}x</span> 
+                ${item.name}
+                <span class="item-price">R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+            </li>`
+        ).join('');
         
         // Garantir que timestamp é um objeto Date válido
         let orderDate;
@@ -2614,27 +2647,44 @@ function createHistoryItemHTML(order) {
             orderDate = new Date(); // Fallback para data atual
         }
         
+        // Ícone de entrega - moto em vez de caminhão
+        const deliveryIcon = order.delivery?.type === 'entrega' ? 
+            '<i class="fas fa-motorcycle delivery-icon"></i>' : 
+            '<i class="fas fa-store delivery-icon"></i>';
+        
         return `
         <div class="history-item">
             <div class="history-item-header">
                 <div>
                     <div class="order-number">Pedido #${order.sequentialId.toString().padStart(3, '0')}</div>
+                    <div class="customer-name">
+                        <i class="fas fa-user"></i> ${order.customer?.name || 'Cliente'}
+                    </div>
                     <div class="order-time">${orderDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
+                    <div class="delivery-info">
+                        ${deliveryIcon}
+                        <span>${order.delivery?.type === 'entrega' ? 'Delivery' : 'Retirada'}</span>
+                    </div>
                 </div>
                 <div class="order-total">R$ ${(order.pricing?.total || 0).toFixed(2).replace('.', ',')}</div>
+            </div>
+            
+            <div class="order-items-detail">
+                <strong>Itens do Pedido:</strong>
+                <ul class="items-list">
+                    ${itemsList}
+                </ul>
             </div>
             
             <div class="history-item-details">
                 <div class="detail-group">
                     <h5>Cliente</h5>
-                    <p>${order.customer.name}</p>
-                    <p>${order.customer.phone}</p>
+                    <p>${order.customer?.phone || 'Telefone não informado'}</p>
                 </div>
                 
                 <div class="detail-group">
                     <h5>Entrega</h5>
-                    <p>${order.delivery?.type === 'entrega' ? 'Delivery' : 'Retirada'}</p>
-                    ${order.delivery?.type === 'entrega' ? `<p>${order.customer?.address || 'Endereço não informado'}</p>` : ''}
+                    ${order.delivery?.type === 'entrega' ? `<p>${order.customer?.address || 'Endereço não informado'}</p>` : '<p>Retirada no local</p>'}
                 </div>
                 
                 <div class="detail-group">
@@ -2642,11 +2692,6 @@ function createHistoryItemHTML(order) {
                     <p>${(order.payment?.method || 'Não informado').toUpperCase()}</p>
                     ${(order.pricing?.discountValue || 0) > 0 ? `<p>Desconto: ${order.pricing?.discountDisplay || 'N/A'}</p>` : ''}
                 </div>
-            </div>
-            
-            <div class="order-items-summary">
-                <h5>Itens do Pedido</h5>
-                <div class="items-list">${itemsList}</div>
             </div>
             
             <div class="history-actions">
