@@ -702,9 +702,11 @@ function saveOrderToHistory() {
     
     // Manter apenas pedidos do dia atual
     const today = new Date().toDateString();
-    orderHistory = orderHistory.filter(order => 
-        new Date(order.timestamp).toDateString() === today
-    );
+    orderHistory = orderHistory.filter(order => {
+        const orderDate = order.timestamp instanceof Date ? 
+            order.timestamp : new Date(order.timestamp);
+        return orderDate.toDateString() === today;
+    });
     
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(orderHistory));
     updateHistoryStats();
@@ -715,10 +717,16 @@ function loadHistoryFromStorage() {
     if (savedHistory) {
         orderHistory = JSON.parse(savedHistory);
         
+        // Converter timestamps de string para Date
+        orderHistory = orderHistory.map(order => ({
+            ...order,
+            timestamp: new Date(order.timestamp)
+        }));
+        
         // Filtrar apenas pedidos de hoje
         const today = new Date().toDateString();
         orderHistory = orderHistory.filter(order => 
-            new Date(order.timestamp).toDateString() === today
+            order.timestamp.toDateString() === today
         );
         
         // Salvar novamente para remover pedidos antigos
@@ -729,9 +737,11 @@ function loadHistoryFromStorage() {
 
 function getNextSequentialId() {
     const today = new Date().toDateString();
-    const todayOrders = orderHistory.filter(order => 
-        new Date(order.timestamp).toDateString() === today
-    );
+    const todayOrders = orderHistory.filter(order => {
+        const orderDate = order.timestamp instanceof Date ? 
+            order.timestamp : new Date(order.timestamp);
+        return orderDate.toDateString() === today;
+    });
     return todayOrders.length + 1;
 }
 
@@ -772,12 +782,16 @@ function createHistoryItemHTML(order) {
         `${item.quantity}x ${item.name}`
     ).join(', ');
     
+    // Garantir que timestamp é um objeto Date
+    const orderDate = order.timestamp instanceof Date ? 
+        order.timestamp : new Date(order.timestamp);
+    
     return `
         <div class="history-item">
             <div class="history-item-header">
                 <div>
                     <div class="order-number">Pedido #${order.sequentialId.toString().padStart(3, '0')}</div>
-                    <div class="order-time">${order.timestamp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
+                    <div class="order-time">${orderDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
                 </div>
                 <div class="order-total">R$ ${order.pricing.total.toFixed(2).replace('.', ',')}</div>
             </div>
