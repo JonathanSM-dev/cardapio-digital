@@ -450,8 +450,8 @@ class RestaurantDB {
         return {
             totalOrders: orders.length,
             todayOrders: todayOrders.length,
-            totalRevenue: orders.reduce((sum, order) => sum + order.pricing.total, 0),
-            todayRevenue: todayOrders.reduce((sum, order) => sum + order.pricing.total, 0),
+            totalRevenue: orders.reduce((sum, order) => sum + (order.total || order.pricing?.total || 0), 0),
+            todayRevenue: todayOrders.reduce((sum, order) => sum + (order.total || order.pricing?.total || 0), 0),
             dbSize: await this.estimateSize()
         };
     }

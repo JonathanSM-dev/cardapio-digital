@@ -5,22 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D'Casa & Cia Assados - Cardápio Digital</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍖</text></svg>">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="D'Casa Assados">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="D'Casa Assados">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#dc3545">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="theme-color" content="#dc3545">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>">
+    <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍖</text></svg>">
+    <link rel="icon" type="image/png" sizes="16x16" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍖</text></svg>">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="indexedDB.js"></script>
     <script src="backup.js"></script>
+    <script src="pwa.js"></script>
 </head>
 <body>
     <!-- Header -->
     <header class="header">
         <div class="container">
             <h1><i class="fas fa-utensils"></i> D'Casa & Cia Assados</h1>
-            <div class="cart-summary">
-                <button id="cart-btn" class="cart-btn">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span id="cart-count">0</span> itens - R$ <span id="cart-total">0,00</span>
-                </button>
+            <div class="header-actions">
+                <!-- PWA Install Button será inserido aqui dinamicamente -->
             </div>
         </div>
     </header>
@@ -35,17 +52,14 @@
     <nav class="main-nav">
         <div class="container">
             <div class="nav-tabs">
-                <button class="nav-tab active" data-tab="menu">
-                    <i class="fas fa-utensils"></i> Cardápio
+                <button class="nav-tab active" data-tab="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Hoje
                 </button>
-                <button class="nav-tab" data-tab="history">
-                    <i class="fas fa-history"></i> Histórico
+                <button class="nav-tab new-order-tab" data-tab="menu">
+                    <i class="fas fa-plus-circle"></i> Novo Pedido
                 </button>
-                <button class="nav-tab" data-tab="analytics">
-                    <i class="fas fa-chart-bar"></i> Relatórios
-                </button>
-                <button class="nav-tab" data-tab="backup">
-                    <i class="fas fa-shield-alt"></i> Backup
+                <button class="nav-tab" data-tab="more">
+                    <i class="fas fa-ellipsis-h"></i> Mais
                 </button>
             </div>
         </div>
@@ -54,8 +68,67 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Menu Tab Content -->
-            <section class="tab-content active" id="menu-tab">
+            <!-- Dashboard Tab Content (Nova seção principal) -->
+            <section class="tab-content active" id="dashboard-tab">
+                <div class="dashboard-section">
+                    <div class="dashboard-header">
+                        <h2>📊 Visão Geral - Hoje</h2>
+                        <div class="quick-stats">
+                            <div class="stat-card">
+                                <div class="stat-icon">💰</div>
+                                <div class="stat-content">
+                                    <span class="stat-value" id="today-revenue">R$ 0,00</span>
+                                    <span class="stat-label">Faturamento Hoje</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">📦</div>
+                                <div class="stat-content">
+                                    <span class="stat-value" id="today-orders">0</span>
+                                    <span class="stat-label">Pedidos Hoje</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">⭐</div>
+                                <div class="stat-content">
+                                    <span class="stat-value" id="today-avg">R$ 0,00</span>
+                                    <span class="stat-label">Ticket Médio</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <h3>🚀 Ações Rápidas</h3>
+                        <div class="action-buttons">
+                            <button class="action-btn primary" onclick="switchTab('menu')">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Novo Pedido</span>
+                            </button>
+                            <button class="action-btn secondary" onclick="showTodayOrders()">
+                                <i class="fas fa-list"></i>
+                                <span>Pedidos de Hoje</span>
+                            </button>
+                            <button class="action-btn secondary" onclick="showQuickStats()">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Relatório Rápido</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Today's Orders Preview -->
+                    <div class="today-preview">
+                        <h3>📋 Últimos Pedidos</h3>
+                        <div id="today-orders-preview" class="orders-preview">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Menu Tab Content (Novo Pedido) -->
+            <section class="tab-content" id="menu-tab">
                 <div class="menu-section">
                     <h2>Nosso Cardápio</h2>
                     <div class="menu-categories">
@@ -76,11 +149,11 @@
                     <div class="history-header">
                         <h3><i class="fas fa-history"></i> Histórico de Pedidos - Hoje</h3>
                         <div class="history-stats">
-                            <span class="stat">Total de Pedidos: <strong id="total-orders">0</strong></span>
-                            <span class="stat">Faturamento: <strong>R$ <span id="total-revenue">0,00</span></strong></span>
+                            <span class="stat">Total de Pedidos: <strong id="history-total-orders">0</strong></span>
+                            <span class="stat">Faturamento: <strong>R$ <span id="history-total-revenue">0,00</span></strong></span>
                         </div>
                     </div>
-                    <div class="history-list" id="history-list">
+                    <div class="history-list" id="history-tab-list">
                         <!-- Order history will be loaded by JavaScript -->
                     </div>
                 </div>
@@ -88,15 +161,26 @@
 
             <!-- Analytics Tab Content -->
             <section class="tab-content" id="analytics-tab" style="display: none;">
-                <div class="analytics-section" id="analytics-section">
+                <div class="analytics-section" id="analytics-main-section">
                     <div class="analytics-header">
-                        <h3><i class="fas fa-chart-bar"></i> Relatórios e Análises - Hoje</h3>
-                        <div class="analytics-period">
-                            <select id="analytics-period" class="period-selector">
+                        <h3><i class="fas fa-chart-bar"></i> Relatórios e Análises</h3>
+                        <div class="analytics-controls">
+                            <select id="analytics-main-period" class="period-selector">
                                 <option value="today">Hoje</option>
                                 <option value="week">Esta Semana</option>
                                 <option value="month">Este Mês</option>
+                                <option value="custom">Período Personalizado</option>
+                                <option value="all">Todos os Pedidos</option>
                             </select>
+                            
+                            <div class="date-range-container" id="main-date-range-container" style="display: none;">
+                                <input type="date" id="main-start-date" class="date-input">
+                                <span>até</span>
+                                <input type="date" id="main-end-date" class="date-input">
+                                <button id="main-apply-date-filter" class="apply-date-btn">
+                                    <i class="fas fa-filter"></i> Aplicar
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
@@ -106,7 +190,7 @@
                             <div class="kpi-card">
                                 <div class="kpi-icon"><i class="fas fa-shopping-cart"></i></div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value" id="kpi-orders">0</div>
+                                    <div class="kpi-value" id="main-kpi-orders">0</div>
                                     <div class="kpi-label">Pedidos</div>
                                 </div>
                             </div>
@@ -114,7 +198,7 @@
                             <div class="kpi-card">
                                 <div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value" id="kpi-revenue">R$ 0</div>
+                                    <div class="kpi-value" id="main-kpi-revenue">R$ 0</div>
                                     <div class="kpi-label">Faturamento</div>
                                 </div>
                             </div>
@@ -122,7 +206,7 @@
                             <div class="kpi-card">
                                 <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value" id="kpi-average">R$ 0</div>
+                                    <div class="kpi-value" id="main-kpi-average">R$ 0</div>
                                     <div class="kpi-label">Ticket Médio</div>
                                 </div>
                             </div>
@@ -130,7 +214,7 @@
                             <div class="kpi-card">
                                 <div class="kpi-icon"><i class="fas fa-truck"></i></div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value" id="kpi-delivery">0%</div>
+                                    <div class="kpi-value" id="main-kpi-delivery">0%</div>
                                     <div class="kpi-label">% Delivery</div>
                                 </div>
                             </div>
@@ -140,22 +224,32 @@
                         <div class="charts-grid">
                             <div class="chart-container">
                                 <h4>Vendas por Horário</h4>
-                                <canvas id="hourlyChart"></canvas>
+                                <canvas id="main-hourlyChart"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h4>Vendas por Dia da Semana</h4>
+                                <canvas id="main-weekdayChart"></canvas>
                             </div>
                             
                             <div class="chart-container">
                                 <h4>Produtos Mais Vendidos</h4>
-                                <canvas id="productsChart"></canvas>
+                                <canvas id="main-productsChart"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h4>Horários de Pico por Produto</h4>
+                                <canvas id="main-productTimeChart"></canvas>
                             </div>
                             
                             <div class="chart-container">
                                 <h4>Formas de Pagamento</h4>
-                                <canvas id="paymentChart"></canvas>
+                                <canvas id="main-paymentChart"></canvas>
                             </div>
                             
                             <div class="chart-container">
                                 <h4>Delivery vs Retirada</h4>
-                                <canvas id="deliveryChart"></canvas>
+                                <canvas id="main-deliveryChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -306,7 +400,234 @@
                 </div>
             </section>
 
-            <!-- Backup Tab Content -->
+            <!-- More Tab Content (Agrupa Histórico, Relatórios e Backup) -->
+            <section class="tab-content" id="more-tab" style="display: none;">
+                <div class="more-section">
+                    <h2>⚙️ Mais Opções</h2>
+                    
+                    <!-- Sub-navigation for More section -->
+                    <div class="sub-nav">
+                        <button class="sub-nav-btn active" data-section="history">
+                            <i class="fas fa-history"></i> Histórico
+                        </button>
+                        <button class="sub-nav-btn" data-section="analytics">
+                            <i class="fas fa-chart-bar"></i> Relatórios
+                        </button>
+                        <button class="sub-nav-btn" data-section="backup">
+                            <i class="fas fa-shield-alt"></i> Backup
+                        </button>
+                    </div>
+
+                    <!-- History Sub-section -->
+                    <div class="sub-section active" id="history-subsection">
+                        <div class="order-history" id="order-history">
+                            <div class="history-header">
+                                <h3><i class="fas fa-history"></i> Histórico de Pedidos - Hoje</h3>
+                                <div class="history-stats">
+                                    <span class="stat">Total de Pedidos: <strong id="total-orders">0</strong></span>
+                                    <span class="stat">Faturamento: <strong>R$ <span id="total-revenue">0,00</span></strong></span>
+                                </div>
+                            </div>
+                            <div class="history-list" id="history-list">
+                                <!-- Order history will be loaded by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Sub-section -->
+                    <div class="sub-section" id="analytics-subsection">
+                        <div class="analytics-section" id="analytics-section">
+                            <div class="analytics-header">
+                                <h3><i class="fas fa-chart-bar"></i> Relatórios e Análises</h3>
+                                <div class="analytics-controls">
+                                    <select id="analytics-period" class="period-selector">
+                                        <option value="today">Hoje</option>
+                                        <option value="week">Esta Semana</option>
+                                        <option value="month">Este Mês</option>
+                                        <option value="custom">Período Personalizado</option>
+                                        <option value="all">Todos os Pedidos</option>
+                                    </select>
+                                    
+                                    <div class="date-range-container" id="date-range-container" style="display: none;">
+                                        <input type="date" id="start-date" class="date-input">
+                                        <span>até</span>
+                                        <input type="date" id="end-date" class="date-input">
+                                        <button id="apply-date-filter" class="apply-date-btn">
+                                            <i class="fas fa-filter"></i> Aplicar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="analytics-grid">
+                                <!-- KPIs Cards -->
+                                <div class="kpi-cards">
+                                    <div class="kpi-card">
+                                        <div class="kpi-icon"><i class="fas fa-shopping-cart"></i></div>
+                                        <div class="kpi-content">
+                                            <div class="kpi-value" id="sub-kpi-orders">0</div>
+                                            <div class="kpi-label">Pedidos</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="kpi-card">
+                                        <div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div>
+                                        <div class="kpi-content">
+                                            <div class="kpi-value" id="sub-kpi-revenue">R$ 0,00</div>
+                                            <div class="kpi-label">Faturamento</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="kpi-card">
+                                        <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                                        <div class="kpi-content">
+                                            <div class="kpi-value" id="kpi-avg-ticket">R$ 0,00</div>
+                                            <div class="kpi-label">Ticket Médio</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="kpi-card">
+                                        <div class="kpi-icon"><i class="fas fa-utensils"></i></div>
+                                        <div class="kpi-content">
+                                            <div class="kpi-value" id="kpi-top-product">-</div>
+                                            <div class="kpi-label">Produto Top</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Charts -->
+                                <div class="charts-grid">
+                                    <div class="chart-container">
+                                        <h4>Vendas por Período</h4>
+                                        <canvas id="hourlyChart"></canvas>
+                                    </div>
+                                    
+                                    <div class="chart-container">
+                                        <h4>Produtos Mais Vendidos</h4>
+                                        <canvas id="productsChart"></canvas>
+                                    </div>
+                                    
+                                    <div class="chart-container">
+                                        <h4>Vendas por Dia da Semana</h4>
+                                        <canvas id="weekdayChart"></canvas>
+                                    </div>
+                                    
+                                    <div class="chart-container">
+                                        <h4>Vendas por Horário (Top Produtos)</h4>
+                                        <canvas id="productTimeChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Backup Sub-section -->
+                    <div class="sub-section" id="backup-subsection">
+                        <div class="backup-section" id="backup-section">
+                            <div class="backup-header">
+                                <h3><i class="fas fa-shield-alt"></i> Backup e Restore - Segurança dos Dados</h3>
+                                <div class="backup-info">
+                                    <span class="info-item">Sistema: <strong id="storage-system">Carregando...</strong></span>
+                                    <span class="info-item">Uso: <strong id="storage-usage">Calculando...</strong></span>
+                                </div>
+                            </div>
+                            
+                            <div class="backup-grid">
+                                <!-- Export Section -->
+                                <div class="backup-card export-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-download"></i> Exportar Backup</h4>
+                                        <p>Faça backup completo dos dados do restaurante</p>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <div class="backup-stats" id="export-stats">
+                                            <div class="stat-item">
+                                                <span class="stat-label">Pedidos:</span>
+                                                <span class="stat-value" id="total-orders-backup">0</span>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="stat-label">Faturamento:</span>
+                                                <span class="stat-value" id="total-revenue-backup">R$ 0,00</span>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="stat-label">Carrinho:</span>
+                                                <span class="stat-value" id="cart-items-backup">0 itens</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <button class="backup-btn export-btn" id="export-backup-btn">
+                                            <i class="fas fa-download"></i>
+                                            Criar Backup Completo
+                                        </button>
+                                        
+                                        <div class="backup-note">
+                                            <i class="fas fa-info-circle"></i>
+                                            Arquivo JSON com todos os dados será baixado
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Import Section -->
+                                <div class="backup-card import-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-upload"></i> Importar Backup</h4>
+                                        <p>Restaure dados de um arquivo de backup</p>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <div class="file-upload-area" id="file-upload-area">
+                                            <input type="file" id="backup-file-input" accept=".json" style="display: none;">
+                                            <div class="upload-placeholder">
+                                                <i class="fas fa-cloud-upload-alt"></i>
+                                                <p>Clique para selecionar arquivo de backup</p>
+                                                <span>Apenas arquivos .json</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <button class="backup-btn import-btn" id="import-backup-btn" disabled>
+                                            <i class="fas fa-upload"></i>
+                                            Importar Backup
+                                        </button>
+                                        
+                                        <div class="backup-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Atenção:</strong> Importar substituirá todos os dados atuais
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Recovery Section -->
+                                <div class="backup-card recovery-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-history"></i> Recuperação de Emergência</h4>
+                                        <p>Restaure dados anteriores à última importação</p>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <div class="recovery-status" id="recovery-status">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <span>Verificando backup de emergência...</span>
+                                        </div>
+                                        
+                                        <button class="backup-btn recovery-btn" id="recovery-btn" disabled>
+                                            <i class="fas fa-undo"></i>
+                                            Restaurar Backup de Emergência
+                                        </button>
+                                        
+                                        <div class="backup-note">
+                                            <i class="fas fa-info-circle"></i>
+                                            Backup criado automaticamente antes da última importação
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Backup Tab Content (Manter temporariamente) -->
             <section class="tab-content" id="backup-tab" style="display: none;">
                 <div class="backup-section" id="backup-section">
                     <div class="backup-header">

@@ -328,7 +328,9 @@ const analyticsSection = document.getElementById('analytics-section');
 
 // Chart instances
 let hourlyChart = null;
+let weekdayChart = null;
 let productsChart = null;
+let productTimeChart = null;
 let paymentChart = null;
 let deliveryChart = null;
 
@@ -360,6 +362,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         const storageInfo = await storageManager.getStorageInfo();
         console.log('🎯 Sistema iniciado:', storageInfo);
         
+        // Inicializar dashboard
+        updateDashboard();
+        
     } catch (error) {
         console.error('❌ Erro na inicialização:', error);
         
@@ -378,6 +383,17 @@ function setupEventListeners() {
             const targetTab = this.dataset.tab;
             switchTab(targetTab);
         });
+    });
+
+    // Event listeners para sub-navegação
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('sub-nav-btn') || e.target.closest('.sub-nav-btn')) {
+            const btn = e.target.classList.contains('sub-nav-btn') ? e.target : e.target.closest('.sub-nav-btn');
+            const sectionName = btn.getAttribute('data-section');
+            if (sectionName) {
+                switchSubSection(sectionName);
+            }
+        }
     });
 
     // Botões de categoria do menu
@@ -462,12 +478,66 @@ function setupEventListeners() {
     document.getElementById('print-order').addEventListener('click', printOrder);
     document.getElementById('new-order').addEventListener('click', startNewOrder);
 
-    // Seletor de período dos relatórios
-    document.getElementById('analytics-period').addEventListener('change', function() {
-        if (analyticsSection.style.display === 'block') {
-            updateAnalytics();
+    // Seletor de período dos relatórios na aba "Mais Opções" (com verificação de existência)
+    const analyticsPerioSelector = document.getElementById('analytics-period');
+    if (analyticsPerioSelector) {
+        analyticsPerioSelector.addEventListener('change', function() {
+            const period = this.value;
+            const dateRangeContainer = document.getElementById('date-range-container');
+            
+            console.log('📅 Período selecionado (Mais Opções):', period);
+            
+            if (dateRangeContainer) {
+                if (period === 'custom') {
+                    console.log('📅 Mostrando campos de data personalizada');
+                    dateRangeContainer.style.display = 'flex';
+                    // Definir datas padrão (última semana)
+                    const today = new Date();
+                    const weekAgo = new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000));
+                    
+                    const endDateEl = document.getElementById('end-date');
+                    const startDateEl = document.getElementById('start-date');
+                    
+                    if (endDateEl) endDateEl.value = today.toISOString().split('T')[0];
+                    if (startDateEl) startDateEl.value = weekAgo.toISOString().split('T')[0];
+                } else {
+                    dateRangeContainer.style.display = 'none';
+                    // Recarregar analytics se estiver visível
+                    if (typeof updateAnalytics === 'function') {
+                        updateAnalytics();
+                    }
+                }
+            }
+        });
+    } else {
+        console.warn('⚠️ Elemento analytics-period não encontrado');
+    }
+    
+    // Botão aplicar filtro de data (com verificação)
+    const applyDateFilterBtn = document.getElementById('apply-date-filter');
+    if (applyDateFilterBtn) {
+        applyDateFilterBtn.addEventListener('click', async function() {
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        if (!startDate || !endDate) {
+            alert('Por favor, selecione ambas as datas');
+            return;
         }
-    });
+        
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('A data inicial deve ser anterior à data final');
+            return;
+        }
+        
+            // Atualizar analytics com período personalizado
+            if (typeof updateAnalyticsWithCustomDates === 'function') {
+                await updateAnalyticsWithCustomDates(startDate, endDate);
+            }
+        });
+    } else {
+        console.warn('⚠️ Elemento apply-date-filter não encontrado');
+    }
 
     // Event listeners para backup
     setupBackupEventListeners();
@@ -822,7 +892,7 @@ function createOrderDetailsHTML() {
             ` : ''}
             <div class="summary-row total-row">
                 <span>Total:</span>
-                <span>R$ ${currentOrder.pricing.total.toFixed(2).replace('.', ',')}</span>
+                <span>R$ ${(currentOrder.pricing?.total || 0).toFixed(2).replace('.', ',')}</span>
             </div>
         </div>
         
@@ -902,7 +972,7 @@ function createPrintHTML() {
             <div>================================</div>
             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px;">
                 <span>TOTAL:</span>
-                <span>R$ ${currentOrder.pricing.total.toFixed(2).replace('.', ',')}</span>
+                <span>R$ ${(currentOrder.pricing?.total || 0).toFixed(2).replace('.', ',')}</span>
             </div>
             <div>================================</div>
         </div>
@@ -1046,11 +1116,8 @@ function loadStoredDataFallback() {
                     sequentialId: order.sequentialId || 1
                 }));
             
-            const today = new Date().toDateString();
-            orderHistory = orderHistory.filter(order => {
-                const orderDate = order.timestamp;
-                return orderDate.toDateString() === today;
-            });
+            // REMOVIDO: Filtro incorreto que limitava apenas pedidos de hoje
+            // Agora carrega TODOS os pedidos, deixando o filtro para as funções específicas
             
             updateHistoryStats();
         } catch (error) {
@@ -1061,8 +1128,41 @@ function loadStoredDataFallback() {
 }
 
 // Funções de histórico
-function showOrderHistory() {
-    renderOrderHistory();
+
+// Função para a aba principal de histórico
+async function showMainHistoryTab() {
+    console.log('📋 Carregando aba principal de histórico...');
+    
+    try {
+        await loadHistoryFromStorage();
+        await renderMainHistoryTab();
+        await updateMainHistoryStats();
+        console.log('✅ Aba principal de histórico carregada');
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar aba principal de histórico:', error);
+        orderHistory = [];
+        await renderMainHistoryTab();
+    }
+}
+
+// Função para a sub-seção de histórico na aba "Mais Opções"
+async function showOrderHistory() {
+    console.log('📋 Carregando histórico de pedidos (sub-seção)...');
+    
+    try {
+        // Usar a função padrão de carregamento para manter consistência
+        await loadHistoryFromStorage();
+        
+        await renderOrderHistory();
+        await updateHistoryStatsFromBackupLogic();
+        console.log('✅ Histórico carregado e estatísticas atualizadas');
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar histórico:', error);
+        orderHistory = [];
+        await renderOrderHistory();
+    }
 }
 
 function hideOrderHistory() {
@@ -1093,19 +1193,206 @@ function switchTab(tabName) {
         targetContent.style.display = 'block';
         
         // Executar ações específicas da aba
-        if (tabName === 'history') {
-            showOrderHistory();
+        if (tabName === 'dashboard') {
+            updateDashboard();
+        } else if (tabName === 'more') {
+            // Default to history subsection
+            switchSubSection('history');
+        } else if (tabName === 'history') {
+            showMainHistoryTab();
         } else if (tabName === 'analytics') {
-            showAnalytics();
+            showMainAnalytics();
         } else if (tabName === 'backup') {
             showBackup();
         }
     }
 }
 
+// Dashboard functionality
+async function updateDashboard() {
+    try {
+        // Buscar pedidos de hoje de forma mais direta
+        let todayOrders = [];
+        
+        try {
+            // Tentar usar o storageManager primeiro
+            const allOrders = await storageManager.loadHistory();
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+            
+            todayOrders = allOrders.filter(order => {
+                const orderDate = new Date(order.timestamp);
+                return orderDate >= startOfDay && orderDate <= endOfDay;
+            });
+        } catch (storageError) {
+            console.warn('Erro no storage, usando dados em memória:', storageError);
+            // Fallback para dados em memória
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+            
+            todayOrders = orderHistory.filter(order => {
+                const orderDate = new Date(order.timestamp);
+                return orderDate >= startOfDay && orderDate <= endOfDay;
+            });
+        }
+        
+        // Calcular estatísticas
+        const totalRevenue = todayOrders.reduce((sum, order) => {
+            const orderTotal = order.pricing?.total || 0;
+            console.log('📊 Pedido:', order.id, 'Total:', orderTotal);
+            return sum + orderTotal;
+        }, 0);
+        const totalOrders = todayOrders.length;
+        const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        
+        // Atualizar cards de estatísticas
+        const revenueEl = document.getElementById('today-revenue');
+        const ordersEl = document.getElementById('today-orders');
+        const avgEl = document.getElementById('today-avg');
+        
+        if (revenueEl) revenueEl.textContent = `R$ ${totalRevenue.toFixed(2)}`;
+        if (ordersEl) ordersEl.textContent = totalOrders;
+        if (avgEl) avgEl.textContent = `R$ ${avgTicket.toFixed(2)}`;
+        
+        // Atualizar preview dos pedidos
+        updateTodayOrdersPreview(todayOrders.slice(-5)); // Últimos 5 pedidos
+        
+        console.log('✅ Dashboard atualizado:', { totalOrders, totalRevenue, avgTicket });
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar dashboard:', error);
+        
+        // Fallback com valores zerados
+        const revenueEl = document.getElementById('today-revenue');
+        const ordersEl = document.getElementById('today-orders');
+        const avgEl = document.getElementById('today-avg');
+        
+        if (revenueEl) revenueEl.textContent = 'R$ 0,00';
+        if (ordersEl) ordersEl.textContent = '0';
+        if (avgEl) avgEl.textContent = 'R$ 0,00';
+        
+        updateTodayOrdersPreview([]);
+    }
+}
+
+// Atualizar preview dos pedidos de hoje
+function updateTodayOrdersPreview(orders) {
+    const container = document.getElementById('today-orders-preview');
+    
+    if (!container) {
+        console.warn('Container today-orders-preview não encontrado');
+        return;
+    }
+    
+    if (!orders || orders.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #6c757d;">
+                <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p>Nenhum pedido hoje ainda</p>
+                <button class="action-btn primary" onclick="switchTab('menu')" style="margin-top: 1rem;">
+                    <i class="fas fa-plus"></i> Criar Primeiro Pedido
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    try {
+        container.innerHTML = orders.map(order => {
+            // Validar dados do pedido
+            const orderId = order.id ? order.id.toString().slice(-4) : 'N/A';
+            const orderTime = order.timestamp ? 
+                new Date(order.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : 
+                'N/A';
+            const orderTotal = (order.pricing?.total || 0).toFixed(2);
+            const deliveryType = (order.delivery?.type === 'entrega') ? '🚚 Entrega' : '🏪 Retirada';
+            
+            return `
+                <div class="order-preview-item" style="
+                    display: flex; 
+                    justify-content: space-between; 
+                    align-items: center; 
+                    padding: 1rem; 
+                    border-bottom: 1px solid #f0f0f0;
+                    transition: background 0.2s ease;
+                " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                    <div>
+                        <strong style="color: #2c3e50;">#${orderId}</strong>
+                        <span style="color: #6c757d; margin-left: 1rem;">${orderTime}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600; color: #28a745;">R$ ${orderTotal}</div>
+                        <div style="font-size: 0.8rem; color: #6c757d;">${deliveryType}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        console.log('✅ Preview de pedidos atualizado:', orders.length + ' pedidos');
+        
+    } catch (error) {
+        console.error('❌ Erro ao renderizar preview de pedidos:', error);
+        container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>Erro ao carregar pedidos</p>
+            </div>
+        `;
+    }
+}
+
+// Funções de ação rápida
+function showTodayOrders() {
+    switchTab('more');
+    switchSubSection('history');
+}
+
+function showQuickStats() {
+    switchTab('more');
+    switchSubSection('analytics');
+}
+
+// Sub-navigation functionality for "More" section
+function switchSubSection(sectionName) {
+    // Remove active class from all sub-nav buttons and sub-sections
+    document.querySelectorAll('.sub-nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.sub-section').forEach(section => section.classList.remove('active'));
+    
+    // Add active class to selected sub-nav button and sub-section
+    const selectedBtn = document.querySelector(`[data-section="${sectionName}"]`);
+    const selectedSection = document.getElementById(`${sectionName}-subsection`);
+    
+    if (selectedBtn && selectedSection) {
+        selectedBtn.classList.add('active');
+        selectedSection.classList.add('active');
+        
+        // Load specific content based on sub-section
+        if (sectionName === 'analytics') {
+            showAnalytics();
+        } else if (sectionName === 'backup') {
+            showBackup();
+        } else if (sectionName === 'history') {
+            showOrderHistory();
+        }
+    }
+}
+
 // Funções de analytics
+
+// Função para a aba principal de Analytics
+async function showMainAnalytics() {
+    console.log('📊 Carregando aba principal de analytics...');
+    await updateMainAnalytics();
+    console.log('✅ Aba principal de analytics carregada');
+}
+
+// Função para a sub-seção de Analytics na aba "Mais Opções"
 async function showAnalytics() {
+    console.log('📊 Carregando relatórios e análises (sub-seção)...');
     await updateAnalytics();
+    console.log('✅ Relatórios carregados com sucesso');
 }
 
 function hideAnalytics() {
@@ -1345,23 +1632,113 @@ function setupBackupEventListeners() {
     });
 }
 
+// Função para atualizar analytics da aba principal
+async function updateMainAnalytics() {
+    try {
+        const periodSelector = document.getElementById('analytics-main-period');
+        const period = periodSelector ? periodSelector.value : 'today';
+        
+        console.log(`📊 Carregando analytics principal para período: ${period}`);
+        
+        const filteredOrders = await getFilteredOrders(period);
+        console.log(`📊 Pedidos filtrados (aba principal):`, filteredOrders.length, filteredOrders);
+        
+        updateMainKPIs(filteredOrders);
+        updateMainCharts(filteredOrders);
+        
+        console.log('✅ Analytics principal atualizado com sucesso');
+    } catch (error) {
+        console.error('❌ Erro ao atualizar analytics principal:', error);
+    }
+}
+
+// Função para atualizar analytics da sub-seção "Mais Opções"
 async function updateAnalytics() {
-    const period = document.getElementById('analytics-period').value;
-    const filteredOrders = await getFilteredOrders(period);
+    try {
+        const periodSelector = document.getElementById('analytics-period');
+        const period = periodSelector ? periodSelector.value : 'today';
+        
+        console.log(`📊 Carregando analytics (sub-seção) para período: ${period}`);
+        
+        const filteredOrders = await getFilteredOrders(period);
+        console.log(`📊 Pedidos filtrados (sub-seção):`, filteredOrders.length, filteredOrders);
+        
+        updateKPIs(filteredOrders);
+        updateCharts(filteredOrders);
+        
+        console.log('✅ Analytics da sub-seção atualizado com sucesso');
+    } catch (error) {
+        console.error('❌ Erro ao atualizar analytics da sub-seção:', error);
+        // Debug: verificar se Chart.js está disponível
+        if (typeof Chart === 'undefined') {
+            console.error('❌ Chart.js não está carregado!');
+        }
+    }
+}
+
+async function updateAnalyticsWithCustomDates(startDate, endDate) {
+    console.log(`📊 Atualizando analytics para período: ${startDate} até ${endDate}`);
+    
+    const filteredOrders = await getCustomFilteredOrders(startDate, endDate);
+    
+    // Atualizar título do header
+    const header = document.querySelector('.analytics-header h3');
+    const start = new Date(startDate).toLocaleDateString('pt-BR');
+    const end = new Date(endDate).toLocaleDateString('pt-BR');
+    header.innerHTML = `<i class="fas fa-chart-bar"></i> Relatórios e Análises - ${start} até ${end}`;
     
     updateKPIs(filteredOrders);
     updateCharts(filteredOrders);
+    
+    console.log(`✅ Analytics atualizado com ${filteredOrders.length} pedidos`);
 }
 
 async function getFilteredOrders(period) {
     try {
-        return await storageManager.loadHistoryByPeriod(period);
-    } catch (error) {
-        console.error('❌ Erro ao filtrar pedidos:', error);
+        let allOrders = [];
         
-        // Fallback para dados em memória
+        // Usar exatamente a mesma lógica que o backup para buscar pedidos
+        if (storageManager.isUsingIndexedDB()) {
+            // IndexedDB - buscar todos os pedidos (como o backup faz)
+            allOrders = await window.restaurantDB.getOrders();
+            console.log(`📊 Pedidos carregados do IndexedDB: ${allOrders.length}`);
+        } else {
+            // localStorage fallback (como o backup faz)
+            const savedHistory = localStorage.getItem('dcasa_order_history');
+            if (savedHistory) {
+                allOrders = JSON.parse(savedHistory);
+                console.log(`📊 Pedidos carregados do localStorage: ${allOrders.length}`);
+            } else {
+                allOrders = [];
+            }
+        }
+        
+        console.log(`📊 Filtrando ${allOrders.length} pedidos para período: ${period}`);
+        console.log(`📊 Dados dos pedidos:`, allOrders.slice(0, 2)); // Mostrar primeiros 2 pedidos para debug
+        
+        // Filtrar por período
         if (period === 'today') {
-            return orderHistory;
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+            
+            console.log(`📊 Filtrando para hoje: ${startOfDay.toISOString()} até ${endOfDay.toISOString()}`);
+            
+            const filtered = allOrders.filter(order => {
+                const orderDate = new Date(order.timestamp);
+                const isToday = orderDate >= startOfDay && orderDate <= endOfDay;
+                if (allOrders.length <= 5) { // Debug apenas se poucos pedidos
+                    console.log(`📊 Pedido ${order.id}: ${orderDate.toISOString()} - É hoje? ${isToday}`);
+                }
+                return isToday;
+            });
+            console.log(`📊 Pedidos de hoje encontrados:`, filtered.length, filtered);
+            return filtered;
+        }
+        
+        if (period === 'all') {
+            console.log(`📊 Todos os pedidos:`, allOrders.length);
+            return allOrders;
         }
         
         const now = new Date();
@@ -1378,35 +1755,195 @@ async function getFilteredOrders(period) {
                 startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         }
         
-        return orderHistory.filter(order => {
-            const orderDate = order.timestamp instanceof Date ? 
-                order.timestamp : new Date(order.timestamp);
+        const filtered = allOrders.filter(order => {
+            const orderDate = new Date(order.timestamp);
             return orderDate >= startDate;
         });
+        
+        console.log(`📊 Pedidos filtrados (${period}):`, filtered.length);
+        return filtered;
+        
+    } catch (error) {
+        console.error('❌ Erro ao filtrar pedidos:', error);
+        return [];
     }
 }
 
+// Função para filtrar pedidos por período personalizado
+async function getCustomFilteredOrders(startDate, endDate) {
+    try {
+        let allOrders = [];
+        
+        // Usar exatamente a mesma lógica que o backup para buscar pedidos
+        if (storageManager.isUsingIndexedDB()) {
+            // IndexedDB - buscar todos os pedidos (como o backup faz)
+            allOrders = await window.restaurantDB.getOrders();
+        } else {
+            // localStorage fallback (como o backup faz)
+            const savedHistory = localStorage.getItem('dcasa_order_history');
+            if (savedHistory) {
+                allOrders = JSON.parse(savedHistory);
+            } else {
+                allOrders = [];
+            }
+        }
+        
+        if (allOrders.length === 0) return [];
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Incluir todo o dia final
+        
+        const filtered = allOrders.filter(order => {
+            const orderDate = new Date(order.timestamp);
+            return orderDate >= start && orderDate <= end;
+        });
+        
+        console.log(`📊 Pedidos período personalizado (${startDate} até ${endDate}):`, filtered.length);
+        return filtered;
+    } catch (error) {
+        console.error('❌ Erro ao filtrar pedidos por período personalizado:', error);
+        return [];
+    }
+}
+
+// Função para obter dados de vendas por dia da semana
+function getWeekdayData(orders) {
+    const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const weekdayData = new Array(7).fill(0);
+    const weekdayRevenue = new Array(7).fill(0);
+    
+    orders.forEach(order => {
+        const orderDate = new Date(order.timestamp);
+        const weekday = orderDate.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+        weekdayData[weekday]++;
+        weekdayRevenue[weekday] += order.totalValue;
+    });
+    
+    return {
+        labels: weekdays,
+        orders: weekdayData,
+        revenue: weekdayRevenue
+    };
+}
+
+// Função para obter horários de pico por produto
+function getProductTimeData(orders) {
+    const productTimeData = {};
+    
+    orders.forEach(order => {
+        const orderHour = new Date(order.timestamp).getHours();
+        
+        order.items.forEach(item => {
+            if (!productTimeData[item.name]) {
+                productTimeData[item.name] = new Array(24).fill(0);
+            }
+            productTimeData[item.name][orderHour] += item.quantity;
+        });
+    });
+    
+    // Pegar os 5 produtos mais vendidos
+    const productTotals = {};
+    Object.keys(productTimeData).forEach(product => {
+        productTotals[product] = productTimeData[product].reduce((sum, qty) => sum + qty, 0);
+    });
+    
+    const topProducts = Object.entries(productTotals)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([product]) => product);
+    
+    return {
+        labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+        products: topProducts,
+        data: topProducts.map(product => productTimeData[product] || new Array(24).fill(0))
+    };
+}
+
+// Função para atualizar KPIs da sub-seção "Mais Opções"
 function updateKPIs(orders) {
     const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => sum + order.pricing.total, 0);
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.pricing?.total || 0), 0);
     const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    const deliveryOrders = orders.filter(order => order.delivery.type === 'entrega').length;
+    
+    // Elementos da sub-seção "Mais Opções"
+    const kpiOrdersEl = document.getElementById('sub-kpi-orders');
+    const kpiRevenueEl = document.getElementById('sub-kpi-revenue');
+    const kpiAverageEl = document.getElementById('kpi-avg-ticket');
+    const kpiTopProductEl = document.getElementById('kpi-top-product');
+    
+    if (kpiOrdersEl) kpiOrdersEl.textContent = totalOrders;
+    if (kpiRevenueEl) kpiRevenueEl.textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+    if (kpiAverageEl) kpiAverageEl.textContent = `R$ ${averageTicket.toFixed(2).replace('.', ',')}`;
+    
+    // Calcular produto mais vendido
+    if (kpiTopProductEl && orders.length > 0) {
+        const productCounts = {};
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                productCounts[item.name] = (productCounts[item.name] || 0) + item.quantity;
+            });
+        });
+        
+        const topProduct = Object.entries(productCounts)
+            .sort(([,a], [,b]) => b - a)[0];
+        
+        kpiTopProductEl.textContent = topProduct ? topProduct[0] : '-';
+    } else if (kpiTopProductEl) {
+        kpiTopProductEl.textContent = '-';
+    }
+    
+    console.log('📊 KPIs da sub-seção atualizados:', { totalOrders, totalRevenue, averageTicket });
+}
+
+// Função para atualizar KPIs da aba principal de Analytics
+function updateMainKPIs(orders) {
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.pricing?.total || 0), 0);
+    const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const deliveryOrders = orders.filter(order => order.delivery?.type === 'entrega').length;
     const deliveryPercentage = totalOrders > 0 ? (deliveryOrders / totalOrders) * 100 : 0;
     
-    document.getElementById('kpi-orders').textContent = totalOrders;
-    document.getElementById('kpi-revenue').textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
-    document.getElementById('kpi-average').textContent = `R$ ${averageTicket.toFixed(2).replace('.', ',')}`;
-    document.getElementById('kpi-delivery').textContent = `${deliveryPercentage.toFixed(1)}%`;
+    // Elementos da aba principal de Analytics
+    const kpiOrdersEl = document.getElementById('main-kpi-orders');
+    const kpiRevenueEl = document.getElementById('main-kpi-revenue');
+    const kpiAverageEl = document.getElementById('main-kpi-average');
+    const kpiDeliveryEl = document.getElementById('main-kpi-delivery');
+    
+    if (kpiOrdersEl) kpiOrdersEl.textContent = totalOrders;
+    if (kpiRevenueEl) kpiRevenueEl.textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+    if (kpiAverageEl) kpiAverageEl.textContent = `R$ ${averageTicket.toFixed(2).replace('.', ',')}`;
+    if (kpiDeliveryEl) kpiDeliveryEl.textContent = `${deliveryPercentage.toFixed(1)}%`;
+    
+    console.log('📊 KPIs da aba principal atualizados:', { totalOrders, totalRevenue, averageTicket, deliveryPercentage });
 }
 
+// Função para atualizar gráficos da aba principal
+function updateMainCharts(orders) {
+    console.log('📈 Atualizando gráficos principais com', orders.length, 'pedidos');
+    updateMainHourlyChart(orders);
+    updateMainWeekdayChart(orders);
+    updateMainProductsChart(orders);
+    updateMainProductTimeChart(orders);
+    updateMainPaymentChart(orders);
+    updateMainDeliveryChart(orders);
+    console.log('✅ Todos os gráficos principais atualizados');
+}
+
+// Função para atualizar gráficos da sub-seção "Mais Opções"
 function updateCharts(orders) {
+    console.log('📈 Atualizando gráficos da sub-seção com', orders.length, 'pedidos');
     updateHourlyChart(orders);
+    updateWeekdayChart(orders);
     updateProductsChart(orders);
+    updateProductTimeChart(orders);
     updatePaymentChart(orders);
     updateDeliveryChart(orders);
+    console.log('✅ Todos os gráficos da sub-seção atualizados');
 }
 
-function updateHourlyChart(orders) {
+// Função para gráfico da aba principal
+function updateMainHourlyChart(orders) {
     const hourlyData = {};
     
     // Inicializar todas as horas
@@ -1419,10 +1956,85 @@ function updateHourlyChart(orders) {
         const orderDate = order.timestamp instanceof Date ? 
             order.timestamp : new Date(order.timestamp);
         const hour = orderDate.getHours();
-        hourlyData[hour] += order.pricing.total;
+        hourlyData[hour] += (order.pricing?.total || 0);
     });
     
-    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    const canvas = document.getElementById('main-hourlyChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas main-hourlyChart não encontrado');
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (window.mainHourlyChart) {
+        window.mainHourlyChart.destroy();
+    }
+    
+    window.mainHourlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(hourlyData).map(h => `${h}:00`),
+            datasets: [{
+                label: 'Faturamento por Hora',
+                data: Object.values(hourlyData),
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Função para gráfico da sub-seção "Mais Opções"
+function updateHourlyChart(orders) {
+    console.log('📈 updateHourlyChart chamada com', orders.length, 'pedidos');
+    
+    const hourlyData = {};
+    
+    // Inicializar todas as horas
+    for (let i = 0; i < 24; i++) {
+        hourlyData[i] = 0;
+    }
+    
+    // Contar pedidos por hora
+    orders.forEach(order => {
+        const orderDate = order.timestamp instanceof Date ? 
+            order.timestamp : new Date(order.timestamp);
+        const hour = orderDate.getHours();
+        hourlyData[hour] += (order.pricing?.total || 0);
+    });
+    
+    console.log('📈 Dados do gráfico por hora:', hourlyData);
+    
+    const canvas = document.getElementById('hourlyChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas hourlyChart não encontrado');
+        return;
+    }
+    
+    console.log('📈 Canvas encontrado, criando gráfico...');
+    const ctx = canvas.getContext('2d');
     
     if (hourlyChart) {
         hourlyChart.destroy();
@@ -1456,6 +2068,292 @@ function updateHourlyChart(orders) {
                         callback: function(value) {
                             return 'R$ ' + value.toFixed(0);
                         }
+                    }
+                }
+            }
+        }
+    });
+    
+    console.log('✅ Gráfico hourlyChart criado com sucesso');
+}
+
+// Funções simplificadas para os outros gráficos principais
+function updateMainWeekdayChart(orders) {
+    const weekdayData = getWeekdayData(orders);
+    const canvas = document.getElementById('main-weekdayChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas main-weekdayChart não encontrado');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    
+    if (window.mainWeekdayChart) {
+        window.mainWeekdayChart.destroy();
+    }
+    
+    window.mainWeekdayChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: weekdayData.labels,
+            datasets: [{
+                label: 'Faturamento por Dia',
+                data: weekdayData.data,
+                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                borderColor: '#dc3545',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+function updateMainProductsChart(orders) {
+    const productsData = getProductsData(orders);
+    const canvas = document.getElementById('main-productsChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas main-productsChart não encontrado');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    
+    if (window.mainProductsChart) {
+        window.mainProductsChart.destroy();
+    }
+    
+    window.mainProductsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: productsData.labels,
+            datasets: [{
+                data: productsData.data,
+                backgroundColor: ['#dc3545', '#ffc107', '#28a745', '#17a2b8', '#6f42c1']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+function updateMainProductTimeChart(orders) {
+    const productTimeData = getProductTimeData(orders);
+    const canvas = document.getElementById('main-productTimeChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas main-productTimeChart não encontrado');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    
+    if (window.mainProductTimeChart) {
+        window.mainProductTimeChart.destroy();
+    }
+    
+    window.mainProductTimeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: productTimeData.labels,
+            datasets: productTimeData.products.map((product, index) => ({
+                label: product,
+                data: productTimeData.data[index],
+                borderColor: ['#dc3545', '#ffc107', '#28a745', '#17a2b8', '#6f42c1'][index],
+                tension: 0.4
+            }))
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+function updateMainPaymentChart(orders) {
+    const paymentData = getPaymentData(orders);
+    const canvas = document.getElementById('main-paymentChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas main-paymentChart não encontrado');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    
+    if (window.mainPaymentChart) {
+        window.mainPaymentChart.destroy();
+    }
+    
+    window.mainPaymentChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: paymentData.labels,
+            datasets: [{
+                data: paymentData.data,
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#17a2b8']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+function updateMainDeliveryChart(orders) {
+    const deliveryData = getDeliveryData(orders);
+    const canvas = document.getElementById('main-deliveryChart');
+    if (!canvas) {
+        console.warn('⚠️ Canvas main-deliveryChart não encontrado');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    
+    if (window.mainDeliveryChart) {
+        window.mainDeliveryChart.destroy();
+    }
+    
+    window.mainDeliveryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: deliveryData.labels,
+            datasets: [{
+                data: deliveryData.data,
+                backgroundColor: ['#dc3545', '#28a745']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+function updateWeekdayChart(orders) {
+    const weekdayData = getWeekdayData(orders);
+    const ctx = document.getElementById('weekdayChart').getContext('2d');
+    
+    if (weekdayChart) {
+        weekdayChart.destroy();
+    }
+    
+    weekdayChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: weekdayData.labels,
+            datasets: [{
+                label: 'Pedidos',
+                data: weekdayData.orders,
+                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                borderColor: '#dc3545',
+                borderWidth: 1,
+                yAxisID: 'y'
+            }, {
+                label: 'Faturamento',
+                data: weekdayData.revenue,
+                type: 'line',
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4,
+                fill: false,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Pedidos'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Faturamento (R$)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateProductTimeChart(orders) {
+    const productTimeData = getProductTimeData(orders);
+    const ctx = document.getElementById('productTimeChart').getContext('2d');
+    
+    if (productTimeChart) {
+        productTimeChart.destroy();
+    }
+    
+    const colors = [
+        'rgba(220, 53, 69, 0.8)',   // Vermelho
+        'rgba(40, 167, 69, 0.8)',   // Verde  
+        'rgba(0, 123, 255, 0.8)',   // Azul
+        'rgba(255, 193, 7, 0.8)',   // Amarelo
+        'rgba(111, 66, 193, 0.8)'   // Roxo
+    ];
+    
+    const datasets = productTimeData.products.map((product, index) => ({
+        label: product,
+        data: productTimeData.data[index],
+        borderColor: colors[index],
+        backgroundColor: colors[index].replace('0.8', '0.2'),
+        tension: 0.4,
+        fill: false
+    }));
+    
+    productTimeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: productTimeData.labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade Vendida'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Horário'
                     }
                 }
             }
@@ -1610,19 +2508,89 @@ function updateDeliveryChart(orders) {
     });
 }
 
-function renderOrderHistory() {
+// Função para renderizar a aba principal de histórico (todos os pedidos)
+async function renderMainHistoryTab() {
+    const historyListEl = document.getElementById('history-tab-list');
+    
+    if (!historyListEl) {
+        console.warn('⚠️ Elemento history-tab-list não encontrado');
+        return;
+    }
+    
+    // Carregar dados se orderHistory estiver vazio
     if (orderHistory.length === 0) {
-        historyList.innerHTML = `
-            <div class="empty-history">
-                <i class="fas fa-clipboard-list"></i>
-                <h3>Nenhum pedido hoje</h3>
+        try {
+            await loadHistoryFromStorage();
+        } catch (error) {
+            console.error('❌ Erro ao carregar histórico:', error);
+        }
+    }
+    
+    if (orderHistory.length === 0) {
+        historyListEl.innerHTML = `
+            <div class="empty-history" style="text-align: center; padding: 3rem; color: #6b7280;">
+                <i class="fas fa-clipboard-list" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <h3>Nenhum pedido registrado</h3>
                 <p>Os pedidos realizados aparecerão aqui</p>
+                <button class="action-btn primary" onclick="switchTab('menu')" style="margin-top: 1rem;">
+                    <i class="fas fa-plus"></i> Criar Primeiro Pedido
+                </button>
             </div>
         `;
         return;
     }
     
-    historyList.innerHTML = orderHistory.map(order => createHistoryItemHTML(order)).join('');
+    historyListEl.innerHTML = orderHistory.map(order => createHistoryItemHTML(order)).join('');
+    console.log('📋 Aba principal de histórico renderizada:', orderHistory.length + ' pedidos');
+}
+
+// Função para renderizar a sub-seção de histórico (apenas pedidos de hoje)
+async function renderOrderHistory() {
+    const historyListEl = document.getElementById('history-list');
+    
+    if (!historyListEl) {
+        console.warn('⚠️ Elemento history-list não encontrado');
+        return;
+    }
+    
+    // Carregar dados se orderHistory estiver vazio
+    if (orderHistory.length === 0) {
+        try {
+            await loadHistoryFromStorage();
+        } catch (error) {
+            console.error('❌ Erro ao carregar histórico:', error);
+        }
+    }
+    
+    // Filtrar pedidos de hoje para a aba "Mais Opções"
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    
+    const todayOrders = orderHistory.filter(order => {
+        const orderDate = order.timestamp instanceof Date ? 
+            order.timestamp : new Date(order.timestamp);
+        return orderDate >= startOfDay && orderDate <= endOfDay;
+    });
+    
+    console.log(`📋 Pedidos de hoje: ${todayOrders.length} de ${orderHistory.length} total`);
+    
+    if (todayOrders.length === 0) {
+        historyListEl.innerHTML = `
+            <div class="empty-history" style="text-align: center; padding: 3rem; color: #6b7280;">
+                <i class="fas fa-clipboard-list" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <h3>Nenhum pedido hoje</h3>
+                <p>Os pedidos de hoje aparecerão aqui</p>
+                <button class="action-btn primary" onclick="switchTab('menu')" style="margin-top: 1rem;">
+                    <i class="fas fa-plus"></i> Fazer Pedido
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    historyListEl.innerHTML = todayOrders.map(order => createHistoryItemHTML(order)).join('');
+    console.log('📋 Histórico renderizado:', todayOrders.length + ' pedidos de hoje');
 }
 
 function createHistoryItemHTML(order) {
@@ -1653,7 +2621,7 @@ function createHistoryItemHTML(order) {
                     <div class="order-number">Pedido #${order.sequentialId.toString().padStart(3, '0')}</div>
                     <div class="order-time">${orderDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
                 </div>
-                <div class="order-total">R$ ${order.pricing.total.toFixed(2).replace('.', ',')}</div>
+                <div class="order-total">R$ ${(order.pricing?.total || 0).toFixed(2).replace('.', ',')}</div>
             </div>
             
             <div class="history-item-details">
@@ -1665,14 +2633,14 @@ function createHistoryItemHTML(order) {
                 
                 <div class="detail-group">
                     <h5>Entrega</h5>
-                    <p>${order.delivery.type === 'entrega' ? 'Delivery' : 'Retirada'}</p>
-                    ${order.delivery.type === 'entrega' ? `<p>${order.customer.address}</p>` : ''}
+                    <p>${order.delivery?.type === 'entrega' ? 'Delivery' : 'Retirada'}</p>
+                    ${order.delivery?.type === 'entrega' ? `<p>${order.customer?.address || 'Endereço não informado'}</p>` : ''}
                 </div>
                 
                 <div class="detail-group">
                     <h5>Pagamento</h5>
-                    <p>${order.payment.method.toUpperCase()}</p>
-                    ${order.pricing.discountValue > 0 ? `<p>Desconto: ${order.pricing.discountDisplay}</p>` : ''}
+                    <p>${(order.payment?.method || 'Não informado').toUpperCase()}</p>
+                    ${(order.pricing?.discountValue || 0) > 0 ? `<p>Desconto: ${order.pricing?.discountDisplay || 'N/A'}</p>` : ''}
                 </div>
             </div>
             
@@ -1705,10 +2673,97 @@ function createHistoryItemHTML(order) {
     }
 }
 
+// Função original (mantida para compatibilidade)
 function updateHistoryStats() {
-    const todayRevenue = orderHistory.reduce((sum, order) => sum + order.pricing.total, 0);
-    totalOrders.textContent = orderHistory.length;
-    totalRevenue.textContent = todayRevenue.toFixed(2).replace('.', ',');
+    const todayRevenue = orderHistory.reduce((sum, order) => sum + (order.pricing?.total || 0), 0);
+    
+    const totalOrdersEl = document.getElementById('total-orders');
+    const totalRevenueEl = document.getElementById('total-revenue');
+    
+    if (totalOrdersEl) totalOrdersEl.textContent = orderHistory.length;
+    if (totalRevenueEl) totalRevenueEl.textContent = todayRevenue.toFixed(2).replace('.', ',');
+    
+    console.log('📊 Stats atualizados:', { orders: orderHistory.length, revenue: todayRevenue });
+}
+
+// Função para atualizar stats da aba principal de histórico
+async function updateMainHistoryStats() {
+    try {
+        let stats;
+        
+        if (storageManager.isUsingIndexedDB()) {
+            stats = await window.restaurantDB.getStats();
+            console.log('📊 Stats da aba principal (IndexedDB):', stats);
+        } else {
+            stats = calculateStatsLikeBackup(orderHistory);
+            console.log('📊 Stats da aba principal (calculados):', stats);
+        }
+        
+        // Atualizar elementos DOM da aba principal de histórico
+        const totalOrdersEl = document.getElementById('history-total-orders');
+        const totalRevenueEl = document.getElementById('history-total-revenue');
+        
+        if (totalOrdersEl) totalOrdersEl.textContent = stats.totalOrders || 0;
+        if (totalRevenueEl) totalRevenueEl.textContent = (stats.totalRevenue || 0).toFixed(2).replace('.', ',');
+        
+        console.log('✅ Stats da aba principal atualizados:', stats);
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar stats da aba principal:', error);
+    }
+}
+
+// Nova função usando exatamente a lógica do backup
+async function updateHistoryStatsFromBackupLogic() {
+    try {
+        let stats;
+        
+        // Usar exatamente a mesma lógica que o backup
+        if (storageManager.isUsingIndexedDB()) {
+            // Buscar stats do IndexedDB (como o backup faz)
+            stats = await window.restaurantDB.getStats();
+            console.log('📊 Stats do IndexedDB:', stats);
+        } else {
+            // Calcular stats manualmente (como o backup faz)
+            stats = calculateStatsLikeBackup(orderHistory);
+            console.log('📊 Stats calculados:', stats);
+        }
+        
+        // Atualizar elementos DOM da aba "Mais Opções" (sub-seção histórico)
+        const totalOrdersEl = document.getElementById('total-orders');
+        const totalRevenueEl = document.getElementById('total-revenue');
+        
+        if (totalOrdersEl) totalOrdersEl.textContent = stats.totalOrders || 0;
+        if (totalRevenueEl) totalRevenueEl.textContent = (stats.totalRevenue || 0).toFixed(2).replace('.', ',');
+        
+        console.log('✅ Stats atualizados com lógica do backup:', stats);
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar stats:', error);
+        // Fallback para função original
+        updateHistoryStats();
+    }
+}
+
+// Função para calcular stats igual ao backup
+function calculateStatsLikeBackup(orders) {
+    if (!orders || orders.length === 0) {
+        return {
+            totalOrders: 0,
+            totalRevenue: 0,
+            averageTicket: 0
+        };
+    }
+
+    const totalRevenue = orders.reduce((sum, order) => {
+        return sum + (order.pricing?.total || 0);
+    }, 0);
+
+    return {
+        totalOrders: orders.length,
+        totalRevenue: totalRevenue,
+        averageTicket: totalRevenue / orders.length
+    };
 }
 
 function reprintOrder(orderId) {

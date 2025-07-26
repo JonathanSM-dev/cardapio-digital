@@ -1,0 +1,179 @@
+{
+  "name": "D'Casa & Cia Assados - Sistema de Pedidos",
+  "short_name": "D'Casa Assados",
+  "description": "Sistema completo de pedidos e gestão para D'Casa & Cia Assados - Cardápio digital, histórico, relatórios e backup",
+  "version": "2.0.0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#dc3545",
+  "background_color": "#ffffff",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["food", "business", "productivity"],
+  
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>",
+      "sizes": "152x152",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>",
+      "sizes": "384x384",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23dc3545'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🍖</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Novo Pedido",
+      "short_name": "Pedido",
+      "description": "Criar um novo pedido rapidamente",
+      "url": "/?action=new-order",
+      "icons": [
+        {
+          "src": "icons/shortcut-order.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Histórico",
+      "short_name": "Histórico",
+      "description": "Ver histórico de pedidos do dia",
+      "url": "/?tab=history",
+      "icons": [
+        {
+          "src": "icons/shortcut-history.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Relatórios",
+      "short_name": "Relatórios",
+      "description": "Acessar relatórios e análises",
+      "url": "/?tab=analytics",
+      "icons": [
+        {
+          "src": "icons/shortcut-analytics.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Backup",
+      "short_name": "Backup",
+      "description": "Fazer backup dos dados",
+      "url": "/?tab=backup",
+      "icons": [
+        {
+          "src": "icons/shortcut-backup.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  
+  "screenshots": [
+    {
+      "src": "screenshots/desktop-menu.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Cardápio Digital - Visão Desktop"
+    },
+    {
+      "src": "screenshots/mobile-menu.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Cardápio Digital - Visão Mobile"
+    },
+    {
+      "src": "screenshots/analytics.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard de Relatórios"
+    }
+  ],
+  
+  "share_target": {
+    "action": "/share-target/",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "backup",
+          "accept": ["application/json", ".json"]
+        }
+      ]
+    }
+  },
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+dcasa",
+      "url": "/?protocol=%s"
+    }
+  ],
+  
+  "prefer_related_applications": false,
+  "related_applications": [],
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+} 
