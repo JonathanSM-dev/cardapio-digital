@@ -100,8 +100,22 @@ const historyList = document.getElementById('history-list');
 const totalOrders = document.getElementById('total-orders');
 const totalRevenue = document.getElementById('total-revenue');
 
+// Função para limpar dados corrompidos (debug)
+function clearAllStoredData() {
+    localStorage.removeItem(CART_STORAGE_KEY);
+    localStorage.removeItem(HISTORY_STORAGE_KEY);
+    cart = [];
+    orderHistory = [];
+    updateCartDisplay();
+    updateHistoryStats();
+    console.log('Todos os dados armazenados foram limpos');
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
+    // Se houver erro persistente, descomente a linha abaixo para limpar dados:
+    // clearAllStoredData();
+    
     loadStoredData();
     loadMenu();
     setupEventListeners();
@@ -713,24 +727,48 @@ function saveOrderToHistory() {
 }
 
 function loadHistoryFromStorage() {
-    const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
-    if (savedHistory) {
-        orderHistory = JSON.parse(savedHistory);
-        
-        // Converter timestamps de string para Date
-        orderHistory = orderHistory.map(order => ({
-            ...order,
-            timestamp: new Date(order.timestamp)
-        }));
-        
-        // Filtrar apenas pedidos de hoje
-        const today = new Date().toDateString();
-        orderHistory = orderHistory.filter(order => 
-            order.timestamp.toDateString() === today
-        );
-        
-        // Salvar novamente para remover pedidos antigos
-        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(orderHistory));
+    try {
+        const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+        if (savedHistory) {
+            let parsedHistory = JSON.parse(savedHistory);
+            
+            // Validar e converter dados
+            orderHistory = parsedHistory
+                .filter(order => order && order.timestamp && order.items) // Filtrar dados válidos
+                .map(order => {
+                    try {
+                        return {
+                            ...order,
+                            timestamp: new Date(order.timestamp), // Converter para Date
+                            sequentialId: order.sequentialId || 1 // Garantir sequentialId
+                        };
+                    } catch (e) {
+                        console.warn('Pedido inválido removido:', order);
+                        return null;
+                    }
+                })
+                .filter(order => order !== null); // Remover pedidos inválidos
+            
+            // Filtrar apenas pedidos de hoje
+            const today = new Date().toDateString();
+            orderHistory = orderHistory.filter(order => {
+                try {
+                    return order.timestamp.toDateString() === today;
+                } catch (e) {
+                    console.warn('Timestamp inválido, removendo pedido:', order);
+                    return false;
+                }
+            });
+            
+            // Salvar dados limpos
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(orderHistory));
+            updateHistoryStats();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar histórico, limpando dados:', error);
+        // Se houver erro, limpar dados corrompidos
+        localStorage.removeItem(HISTORY_STORAGE_KEY);
+        orderHistory = [];
         updateHistoryStats();
     }
 }
@@ -778,15 +816,27 @@ function renderOrderHistory() {
 }
 
 function createHistoryItemHTML(order) {
-    const itemsList = order.items.map(item => 
-        `${item.quantity}x ${item.name}`
-    ).join(', ');
-    
-    // Garantir que timestamp é um objeto Date
-    const orderDate = order.timestamp instanceof Date ? 
-        order.timestamp : new Date(order.timestamp);
-    
-    return `
+    try {
+        const itemsList = order.items.map(item => 
+            `${item.quantity}x ${item.name}`
+        ).join(', ');
+        
+        // Garantir que timestamp é um objeto Date válido
+        let orderDate;
+        try {
+            orderDate = order.timestamp instanceof Date ? 
+                order.timestamp : new Date(order.timestamp);
+            
+            // Verificar se a data é válida
+            if (isNaN(orderDate.getTime())) {
+                throw new Error('Data inválida');
+            }
+        } catch (e) {
+            console.warn('Timestamp inválido, usando data atual:', order.timestamp);
+            orderDate = new Date(); // Fallback para data atual
+        }
+        
+        return `
         <div class="history-item">
             <div class="history-item-header">
                 <div>
@@ -831,6 +881,18 @@ function createHistoryItemHTML(order) {
             </div>
         </div>
     `;
+    } catch (error) {
+        console.error('Erro ao criar HTML do histórico:', error, order);
+        return `
+            <div class="history-item" style="border-color: #dc3545; background: #fff5f5;">
+                <div class="history-item-header">
+                    <div class="order-number" style="color: #dc3545;">Pedido com erro</div>
+                    <div class="order-total">R$ 0,00</div>
+                </div>
+                <p style="color: #666; font-size: 0.9rem;">Este pedido contém dados inválidos e será removido automaticamente.</p>
+            </div>
+        `;
+    }
 }
 
 function updateHistoryStats() {
