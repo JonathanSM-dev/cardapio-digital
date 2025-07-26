@@ -7,6 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍖</text></svg>">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -28,27 +29,45 @@
         <span id="floating-cart-text">Carrinho Vazio</span>
     </button>
 
+    <!-- Navigation Tabs -->
+    <nav class="main-nav">
+        <div class="container">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="menu">
+                    <i class="fas fa-utensils"></i> Cardápio
+                </button>
+                <button class="nav-tab" data-tab="history">
+                    <i class="fas fa-history"></i> Histórico
+                </button>
+                <button class="nav-tab" data-tab="analytics">
+                    <i class="fas fa-chart-bar"></i> Relatórios
+                </button>
+            </div>
+        </div>
+    </nav>
+
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Menu Section -->
-            <section class="menu-section">
-                <h2>Nosso Cardápio</h2>
-                <div class="menu-categories">
-                    <button class="category-btn active" data-category="all">Todos</button>
-                    <button class="category-btn" data-category="pratos">Pratos Principais</button>
-                    <button class="category-btn" data-category="acompanhamentos">Acompanhamentos</button>
-                    <button class="category-btn" data-category="bebidas">Bebidas</button>
-                    <button class="category-btn history-btn" data-category="history">
-                        <i class="fas fa-history"></i> Histórico
-                    </button>
+            <!-- Menu Tab Content -->
+            <section class="tab-content active" id="menu-tab">
+                <div class="menu-section">
+                    <h2>Nosso Cardápio</h2>
+                    <div class="menu-categories">
+                        <button class="category-btn active" data-category="all">Todos</button>
+                        <button class="category-btn" data-category="pratos">Pratos Principais</button>
+                        <button class="category-btn" data-category="acompanhamentos">Acompanhamentos</button>
+                        <button class="category-btn" data-category="bebidas">Bebidas</button>
+                    </div>
+                    <div class="menu-grid" id="menu-grid">
+                        <!-- Menu items will be loaded by JavaScript -->
+                    </div>
                 </div>
-                <div class="menu-grid" id="menu-grid">
-                    <!-- Menu items will be loaded by JavaScript -->
-                </div>
-                
-                <!-- Order History Section -->
-                <div class="order-history" id="order-history" style="display: none;">
+            </section>
+
+            <!-- History Tab Content -->
+            <section class="tab-content" id="history-tab" style="display: none;">
+                <div class="order-history" id="order-history">
                     <div class="history-header">
                         <h3><i class="fas fa-history"></i> Histórico de Pedidos - Hoje</h3>
                         <div class="history-stats">
@@ -61,6 +80,84 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Analytics Tab Content -->
+            <section class="tab-content" id="analytics-tab" style="display: none;">
+                <div class="analytics-section" id="analytics-section">
+                    <div class="analytics-header">
+                        <h3><i class="fas fa-chart-bar"></i> Relatórios e Análises - Hoje</h3>
+                        <div class="analytics-period">
+                            <select id="analytics-period" class="period-selector">
+                                <option value="today">Hoje</option>
+                                <option value="week">Esta Semana</option>
+                                <option value="month">Este Mês</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-grid">
+                        <!-- KPIs Cards -->
+                        <div class="kpi-cards">
+                            <div class="kpi-card">
+                                <div class="kpi-icon"><i class="fas fa-shopping-cart"></i></div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value" id="kpi-orders">0</div>
+                                    <div class="kpi-label">Pedidos</div>
+                                </div>
+                            </div>
+                            
+                            <div class="kpi-card">
+                                <div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value" id="kpi-revenue">R$ 0</div>
+                                    <div class="kpi-label">Faturamento</div>
+                                </div>
+                            </div>
+                            
+                            <div class="kpi-card">
+                                <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value" id="kpi-average">R$ 0</div>
+                                    <div class="kpi-label">Ticket Médio</div>
+                                </div>
+                            </div>
+                            
+                            <div class="kpi-card">
+                                <div class="kpi-icon"><i class="fas fa-truck"></i></div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value" id="kpi-delivery">0%</div>
+                                    <div class="kpi-label">% Delivery</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Charts Grid -->
+                        <div class="charts-grid">
+                            <div class="chart-container">
+                                <h4>Vendas por Horário</h4>
+                                <canvas id="hourlyChart"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h4>Produtos Mais Vendidos</h4>
+                                <canvas id="productsChart"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h4>Formas de Pagamento</h4>
+                                <canvas id="paymentChart"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h4>Delivery vs Retirada</h4>
+                                <canvas id="deliveryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
 
             <!-- Cart Section -->
             <section class="cart-section" id="cart-section" style="display: none;">

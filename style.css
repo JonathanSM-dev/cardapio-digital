@@ -45,6 +45,57 @@ body {
     color: #fff;
 }
 
+/* Navigation Tabs */
+.main-nav {
+    background: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    padding: 0;
+}
+
+.nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+}
+
+.nav-tab {
+    background: transparent;
+    border: none;
+    padding: 1rem 2rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-tab:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.nav-tab.active {
+    color: #dc3545;
+    border-bottom-color: #dc3545;
+    background: white;
+}
+
+.nav-tab i {
+    margin-right: 0.5rem;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 /* Carrinho flutuante */
 .floating-cart {
     position: fixed;
@@ -141,6 +192,17 @@ body {
 .history-btn:hover {
     background: #000 !important;
     border-color: #000 !important;
+}
+
+.analytics-btn {
+    background: #6f42c1 !important;
+    color: white !important;
+    border-color: #6f42c1 !important;
+}
+
+.analytics-btn:hover {
+    background: #5a2d91 !important;
+    border-color: #5a2d91 !important;
 }
 
 .menu-grid {
@@ -742,6 +804,33 @@ body {
         max-height: 70vh;
     }
 
+    /* Analytics responsivo */
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kpi-cards {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .analytics-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    /* Navigation responsiva */
+    .nav-tabs {
+        flex-wrap: wrap;
+    }
+
+    .nav-tab {
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 100px;
+        text-align: center;
+    }
+
     /* Carrinho flutuante em mobile */
     .floating-cart {
         bottom: 15px;
@@ -1028,6 +1117,128 @@ body {
     font-size: 3rem;
     margin-bottom: 1rem;
     color: #ccc;
+}
+
+/* Analytics Section */
+.analytics-section {
+    margin-top: 2rem;
+}
+
+.analytics-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.analytics-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.period-selector {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.period-selector option {
+    background: #6f42c1;
+    color: white;
+}
+
+.analytics-grid {
+    display: grid;
+    gap: 2rem;
+}
+
+/* KPI Cards */
+.kpi-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.kpi-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.kpi-label {
+    font-size: 0.9rem;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.chart-container h4 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.chart-container canvas {
+    max-height: 300px;
 }
 
 /* Hidden elements */

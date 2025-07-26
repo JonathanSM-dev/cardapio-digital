@@ -99,6 +99,13 @@ const orderHistorySection = document.getElementById('order-history');
 const historyList = document.getElementById('history-list');
 const totalOrders = document.getElementById('total-orders');
 const totalRevenue = document.getElementById('total-revenue');
+const analyticsSection = document.getElementById('analytics-section');
+
+// Chart instances
+let hourlyChart = null;
+let productsChart = null;
+let paymentChart = null;
+let deliveryChart = null;
 
 // Função para limpar dados corrompidos (debug)
 function clearAllStoredData() {
@@ -123,18 +130,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Configurar event listeners
 function setupEventListeners() {
-    // Botões de categoria
+    // Botões de navegação principal
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            switchTab(targetTab);
+        });
+    });
+
+    // Botões de categoria do menu
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.category-btn.active').classList.remove('active');
             this.classList.add('active');
             
-            if (this.dataset.category === 'history') {
-                showOrderHistory();
-            } else {
-                hideOrderHistory();
-                filterMenu(this.dataset.category);
-            }
+            filterMenu(this.dataset.category);
         });
     });
 
@@ -209,6 +219,13 @@ function setupEventListeners() {
     // Botões da tela de confirmação
     document.getElementById('print-order').addEventListener('click', printOrder);
     document.getElementById('new-order').addEventListener('click', startNewOrder);
+
+    // Seletor de período dos relatórios
+    document.getElementById('analytics-period').addEventListener('change', function() {
+        if (analyticsSection.style.display === 'block') {
+            updateAnalytics();
+        }
+    });
 
     // Fechar tela de pedido confirmado
     document.getElementById('close-order').addEventListener('click', function() {
@@ -670,7 +687,7 @@ function startNewOrder() {
     
     // Voltar para o menu
     hideAllSections();
-    hideOrderHistory();
+    switchTab('menu');
     
     // Reativar categoria "Todos"
     document.querySelector('.category-btn.active').classList.remove('active');
@@ -790,14 +807,309 @@ function loadStoredData() {
 
 // Funções de histórico
 function showOrderHistory() {
-    menuGrid.style.display = 'none';
-    orderHistorySection.style.display = 'block';
     renderOrderHistory();
 }
 
 function hideOrderHistory() {
     menuGrid.style.display = 'grid';
     orderHistorySection.style.display = 'none';
+}
+
+// Funções de gerenciamento de abas
+function switchTab(tabName) {
+    // Remover active de todas as abas
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Ocultar todo o conteúdo das abas
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        content.style.display = 'none';
+    });
+    
+    // Ativar a aba clicada
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    // Mostrar o conteúdo da aba correspondente
+    const targetContent = document.getElementById(`${tabName}-tab`);
+    if (targetContent) {
+        targetContent.classList.add('active');
+        targetContent.style.display = 'block';
+        
+        // Executar ações específicas da aba
+        if (tabName === 'history') {
+            showOrderHistory();
+        } else if (tabName === 'analytics') {
+            showAnalytics();
+        }
+    }
+}
+
+// Funções de analytics
+function showAnalytics() {
+    updateAnalytics();
+}
+
+function hideAnalytics() {
+    // Função mantida para compatibilidade, mas não é mais necessária
+}
+
+function updateAnalytics() {
+    const period = document.getElementById('analytics-period').value;
+    const filteredOrders = getFilteredOrders(period);
+    
+    updateKPIs(filteredOrders);
+    updateCharts(filteredOrders);
+}
+
+function getFilteredOrders(period) {
+    const now = new Date();
+    let startDate;
+    
+    switch(period) {
+        case 'today':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+        case 'week':
+            startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+            break;
+        case 'month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+        default:
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+    
+    return orderHistory.filter(order => {
+        const orderDate = order.timestamp instanceof Date ? 
+            order.timestamp : new Date(order.timestamp);
+        return orderDate >= startDate;
+    });
+}
+
+function updateKPIs(orders) {
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, order) => sum + order.pricing.total, 0);
+    const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const deliveryOrders = orders.filter(order => order.delivery.type === 'entrega').length;
+    const deliveryPercentage = totalOrders > 0 ? (deliveryOrders / totalOrders) * 100 : 0;
+    
+    document.getElementById('kpi-orders').textContent = totalOrders;
+    document.getElementById('kpi-revenue').textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+    document.getElementById('kpi-average').textContent = `R$ ${averageTicket.toFixed(2).replace('.', ',')}`;
+    document.getElementById('kpi-delivery').textContent = `${deliveryPercentage.toFixed(1)}%`;
+}
+
+function updateCharts(orders) {
+    updateHourlyChart(orders);
+    updateProductsChart(orders);
+    updatePaymentChart(orders);
+    updateDeliveryChart(orders);
+}
+
+function updateHourlyChart(orders) {
+    const hourlyData = {};
+    
+    // Inicializar todas as horas
+    for (let i = 0; i < 24; i++) {
+        hourlyData[i] = 0;
+    }
+    
+    // Contar pedidos por hora
+    orders.forEach(order => {
+        const orderDate = order.timestamp instanceof Date ? 
+            order.timestamp : new Date(order.timestamp);
+        const hour = orderDate.getHours();
+        hourlyData[hour] += order.pricing.total;
+    });
+    
+    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    
+    if (hourlyChart) {
+        hourlyChart.destroy();
+    }
+    
+    hourlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(hourlyData).map(h => `${h}:00`),
+            datasets: [{
+                label: 'Faturamento por Hora',
+                data: Object.values(hourlyData),
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateProductsChart(orders) {
+    const productData = {};
+    
+    orders.forEach(order => {
+        order.items.forEach(item => {
+            if (productData[item.name]) {
+                productData[item.name] += item.quantity;
+            } else {
+                productData[item.name] = item.quantity;
+            }
+        });
+    });
+    
+    // Pegar top 5 produtos
+    const sortedProducts = Object.entries(productData)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5);
+    
+    const ctx = document.getElementById('productsChart').getContext('2d');
+    
+    if (productsChart) {
+        productsChart.destroy();
+    }
+    
+    productsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: sortedProducts.map(([name]) => name),
+            datasets: [{
+                data: sortedProducts.map(([, quantity]) => quantity),
+                backgroundColor: [
+                    '#dc3545',
+                    '#8b0000',
+                    '#ff6b6b',
+                    '#c92a2a',
+                    '#a61e1e'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function updatePaymentChart(orders) {
+    const paymentData = {};
+    
+    orders.forEach(order => {
+        const method = order.payment.method;
+        if (paymentData[method]) {
+            paymentData[method]++;
+        } else {
+            paymentData[method] = 1;
+        }
+    });
+    
+    const ctx = document.getElementById('paymentChart').getContext('2d');
+    
+    if (paymentChart) {
+        paymentChart.destroy();
+    }
+    
+    paymentChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(paymentData).map(method => method.toUpperCase()),
+            datasets: [{
+                data: Object.values(paymentData),
+                backgroundColor: [
+                    '#6f42c1',
+                    '#5a2d91',
+                    '#9c6ae0'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function updateDeliveryChart(orders) {
+    const deliveryData = {
+        'Entrega': 0,
+        'Retirada': 0
+    };
+    
+    orders.forEach(order => {
+        if (order.delivery.type === 'entrega') {
+            deliveryData['Entrega']++;
+        } else {
+            deliveryData['Retirada']++;
+        }
+    });
+    
+    const ctx = document.getElementById('deliveryChart').getContext('2d');
+    
+    if (deliveryChart) {
+        deliveryChart.destroy();
+    }
+    
+    deliveryChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(deliveryData),
+            datasets: [{
+                label: 'Número de Pedidos',
+                data: Object.values(deliveryData),
+                backgroundColor: [
+                    '#dc3545',
+                    '#333'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
 }
 
 function renderOrderHistory() {
@@ -928,9 +1240,9 @@ function repeatOrder(orderId) {
         });
         
         // Voltar para o menu
+        switchTab('menu');
         document.querySelector('.category-btn.active').classList.remove('active');
         document.querySelector('[data-category="all"]').classList.add('active');
-        hideOrderHistory();
         
         updateCartDisplay();
         saveCartToStorage();
