@@ -38,9 +38,26 @@
                     <button class="category-btn" data-category="pratos">Pratos Principais</button>
                     <button class="category-btn" data-category="acompanhamentos">Acompanhamentos</button>
                     <button class="category-btn" data-category="bebidas">Bebidas</button>
+                    <button class="category-btn history-btn" data-category="history">
+                        <i class="fas fa-history"></i> Histórico
+                    </button>
                 </div>
                 <div class="menu-grid" id="menu-grid">
                     <!-- Menu items will be loaded by JavaScript -->
+                </div>
+                
+                <!-- Order History Section -->
+                <div class="order-history" id="order-history" style="display: none;">
+                    <div class="history-header">
+                        <h3><i class="fas fa-history"></i> Histórico de Pedidos - Hoje</h3>
+                        <div class="history-stats">
+                            <span class="stat">Total de Pedidos: <strong id="total-orders">0</strong></span>
+                            <span class="stat">Faturamento: <strong>R$ <span id="total-revenue">0,00</span></strong></span>
+                        </div>
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <!-- Order history will be loaded by JavaScript -->
+                    </div>
                 </div>
             </section>
 

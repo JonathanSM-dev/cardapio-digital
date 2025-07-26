@@ -80,6 +80,11 @@ const menuData = [
 // Estado da aplicação
 let cart = [];
 let currentOrder = null;
+let orderHistory = [];
+
+// Chaves para localStorage
+const CART_STORAGE_KEY = 'dcasa_cart';
+const HISTORY_STORAGE_KEY = 'dcasa_order_history';
 
 // Elementos DOM
 const menuGrid = document.getElementById('menu-grid');
@@ -90,9 +95,14 @@ const floatingCart = document.getElementById('floating-cart');
 const floatingCartText = document.getElementById('floating-cart-text');
 const cartItems = document.getElementById('cart-items');
 const finalTotal = document.getElementById('final-total');
+const orderHistorySection = document.getElementById('order-history');
+const historyList = document.getElementById('history-list');
+const totalOrders = document.getElementById('total-orders');
+const totalRevenue = document.getElementById('total-revenue');
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
+    loadStoredData();
     loadMenu();
     setupEventListeners();
 });
@@ -104,7 +114,13 @@ function setupEventListeners() {
         btn.addEventListener('click', function() {
             document.querySelector('.category-btn.active').classList.remove('active');
             this.classList.add('active');
-            filterMenu(this.dataset.category);
+            
+            if (this.dataset.category === 'history') {
+                showOrderHistory();
+            } else {
+                hideOrderHistory();
+                filterMenu(this.dataset.category);
+            }
         });
     });
 
@@ -256,6 +272,7 @@ function addToCart(itemId) {
     }
 
     updateCartDisplay();
+    saveCartToStorage();
     showToast(`${item.name} adicionado ao carrinho!`);
 }
 
@@ -322,6 +339,7 @@ function updateQuantity(itemId, change) {
         }
         
         updateCartDisplay();
+        saveCartToStorage();
     }
 }
 
@@ -454,6 +472,7 @@ function handleOrderSubmit(e) {
     };
     
     showOrderConfirmation();
+    saveOrderToHistory();
 }
 
 // Mostrar confirmação do pedido
@@ -637,7 +656,14 @@ function startNewOrder() {
     
     // Voltar para o menu
     hideAllSections();
+    hideOrderHistory();
+    
+    // Reativar categoria "Todos"
+    document.querySelector('.category-btn.active').classList.remove('active');
+    document.querySelector('[data-category="all"]').classList.add('active');
+    
     updateCartDisplay();
+    saveCartToStorage();
     
     showToast('Novo pedido iniciado!');
 }
@@ -647,6 +673,193 @@ function hideAllSections() {
     cartSection.style.display = 'none';
     checkoutSection.style.display = 'none';
     orderConfirmed.style.display = 'none';
+}
+
+// Funções de armazenamento local
+function saveCartToStorage() {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+}
+
+function loadCartFromStorage() {
+    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+    if (savedCart) {
+        cart = JSON.parse(savedCart);
+        updateCartDisplay();
+    }
+}
+
+function saveOrderToHistory() {
+    if (!currentOrder) return;
+    
+    // Adicionar timestamp único para o ID
+    const orderWithId = {
+        ...currentOrder,
+        id: Date.now(),
+        sequentialId: getNextSequentialId()
+    };
+    
+    orderHistory.unshift(orderWithId); // Adiciona no início (mais recente primeiro)
+    
+    // Manter apenas pedidos do dia atual
+    const today = new Date().toDateString();
+    orderHistory = orderHistory.filter(order => 
+        new Date(order.timestamp).toDateString() === today
+    );
+    
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(orderHistory));
+    updateHistoryStats();
+}
+
+function loadHistoryFromStorage() {
+    const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (savedHistory) {
+        orderHistory = JSON.parse(savedHistory);
+        
+        // Filtrar apenas pedidos de hoje
+        const today = new Date().toDateString();
+        orderHistory = orderHistory.filter(order => 
+            new Date(order.timestamp).toDateString() === today
+        );
+        
+        // Salvar novamente para remover pedidos antigos
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(orderHistory));
+        updateHistoryStats();
+    }
+}
+
+function getNextSequentialId() {
+    const today = new Date().toDateString();
+    const todayOrders = orderHistory.filter(order => 
+        new Date(order.timestamp).toDateString() === today
+    );
+    return todayOrders.length + 1;
+}
+
+function loadStoredData() {
+    loadCartFromStorage();
+    loadHistoryFromStorage();
+}
+
+// Funções de histórico
+function showOrderHistory() {
+    menuGrid.style.display = 'none';
+    orderHistorySection.style.display = 'block';
+    renderOrderHistory();
+}
+
+function hideOrderHistory() {
+    menuGrid.style.display = 'grid';
+    orderHistorySection.style.display = 'none';
+}
+
+function renderOrderHistory() {
+    if (orderHistory.length === 0) {
+        historyList.innerHTML = `
+            <div class="empty-history">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>Nenhum pedido hoje</h3>
+                <p>Os pedidos realizados aparecerão aqui</p>
+            </div>
+        `;
+        return;
+    }
+    
+    historyList.innerHTML = orderHistory.map(order => createHistoryItemHTML(order)).join('');
+}
+
+function createHistoryItemHTML(order) {
+    const itemsList = order.items.map(item => 
+        `${item.quantity}x ${item.name}`
+    ).join(', ');
+    
+    return `
+        <div class="history-item">
+            <div class="history-item-header">
+                <div>
+                    <div class="order-number">Pedido #${order.sequentialId.toString().padStart(3, '0')}</div>
+                    <div class="order-time">${order.timestamp.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
+                </div>
+                <div class="order-total">R$ ${order.pricing.total.toFixed(2).replace('.', ',')}</div>
+            </div>
+            
+            <div class="history-item-details">
+                <div class="detail-group">
+                    <h5>Cliente</h5>
+                    <p>${order.customer.name}</p>
+                    <p>${order.customer.phone}</p>
+                </div>
+                
+                <div class="detail-group">
+                    <h5>Entrega</h5>
+                    <p>${order.delivery.type === 'entrega' ? 'Delivery' : 'Retirada'}</p>
+                    ${order.delivery.type === 'entrega' ? `<p>${order.customer.address}</p>` : ''}
+                </div>
+                
+                <div class="detail-group">
+                    <h5>Pagamento</h5>
+                    <p>${order.payment.method.toUpperCase()}</p>
+                    ${order.pricing.discountValue > 0 ? `<p>Desconto: ${order.pricing.discountDisplay}</p>` : ''}
+                </div>
+            </div>
+            
+            <div class="order-items-summary">
+                <h5>Itens do Pedido</h5>
+                <div class="items-list">${itemsList}</div>
+            </div>
+            
+            <div class="history-actions">
+                <button class="history-action-btn" onclick="reprintOrder(${order.id})">
+                    <i class="fas fa-print"></i> Reimprimir
+                </button>
+                <button class="history-action-btn" onclick="repeatOrder(${order.id})">
+                    <i class="fas fa-redo"></i> Repetir Pedido
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function updateHistoryStats() {
+    const todayRevenue = orderHistory.reduce((sum, order) => sum + order.pricing.total, 0);
+    totalOrders.textContent = orderHistory.length;
+    totalRevenue.textContent = todayRevenue.toFixed(2).replace('.', ',');
+}
+
+function reprintOrder(orderId) {
+    const order = orderHistory.find(o => o.id === orderId);
+    if (order) {
+        currentOrder = order;
+        printOrder();
+    }
+}
+
+function repeatOrder(orderId) {
+    const order = orderHistory.find(o => o.id === orderId);
+    if (order) {
+        // Limpar carrinho atual
+        cart = [];
+        
+        // Adicionar itens do pedido anterior
+        order.items.forEach(item => {
+            cart.push({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                price: item.price,
+                category: item.category,
+                quantity: item.quantity
+            });
+        });
+        
+        // Voltar para o menu
+        document.querySelector('.category-btn.active').classList.remove('active');
+        document.querySelector('[data-category="all"]').classList.add('active');
+        hideOrderHistory();
+        
+        updateCartDisplay();
+        saveCartToStorage();
+        showToast('Pedido adicionado ao carrinho!');
+    }
 }
 
 // Mostrar toast de notificação
