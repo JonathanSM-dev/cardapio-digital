@@ -82,9 +82,234 @@ let cart = [];
 let currentOrder = null;
 let orderHistory = [];
 
-// Chaves para localStorage
+// Chaves para armazenamento
 const CART_STORAGE_KEY = 'dcasa_cart';
 const HISTORY_STORAGE_KEY = 'dcasa_order_history';
+
+// Sistema de armazenamento híbrido (IndexedDB + localStorage fallback)
+class StorageManager {
+    constructor() {
+        this.useIndexedDB = false;
+        this.isInitialized = false;
+    }
+
+    async init() {
+        try {
+            // Verificar suporte ao IndexedDB
+            if (RestaurantDB.isSupported()) {
+                console.log('🗄️ Inicializando sistema de armazenamento avançado...');
+                
+                await window.restaurantDB.init();
+                
+                // Verificar se precisa migrar
+                const migrationCompleted = await window.restaurantDB.isMigrationCompleted();
+                if (!migrationCompleted) {
+                    console.log('🔄 Realizando migração automática...');
+                    await window.restaurantDB.migrateFromLocalStorage();
+                    
+                    // Manter localStorage como backup por segurança
+                    console.log('✅ Migração concluída, localStorage mantido como backup');
+                }
+                
+                this.useIndexedDB = true;
+                console.log('✅ Sistema IndexedDB ativo');
+                
+                // Mostrar estatísticas
+                const stats = await window.restaurantDB.getStats();
+                console.log('📊 Estatísticas do banco:', stats);
+                
+            } else {
+                console.warn('⚠️ IndexedDB não suportado, usando localStorage');
+                this.useIndexedDB = false;
+            }
+            
+            this.isInitialized = true;
+            
+        } catch (error) {
+            console.error('❌ Erro na inicialização do armazenamento, usando localStorage:', error);
+            this.useIndexedDB = false;
+            this.isInitialized = true;
+        }
+    }
+
+    // ==================== OPERAÇÕES DE CARRINHO ====================
+
+    async saveCart(cartItems) {
+        if (this.useIndexedDB) {
+            try {
+                await window.restaurantDB.saveCart(cartItems);
+                return;
+            } catch (error) {
+                console.error('❌ Erro ao salvar carrinho no IndexedDB, usando localStorage:', error);
+            }
+        }
+        
+        // Fallback para localStorage
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    }
+
+    async loadCart() {
+        if (this.useIndexedDB) {
+            try {
+                return await window.restaurantDB.loadCart();
+            } catch (error) {
+                console.error('❌ Erro ao carregar carrinho do IndexedDB, usando localStorage:', error);
+            }
+        }
+        
+        // Fallback para localStorage
+        const saved = localStorage.getItem(CART_STORAGE_KEY);
+        return saved ? JSON.parse(saved) : [];
+    }
+
+    async clearCart() {
+        if (this.useIndexedDB) {
+            try {
+                await window.restaurantDB.clearCart();
+                return;
+            } catch (error) {
+                console.error('❌ Erro ao limpar carrinho no IndexedDB:', error);
+            }
+        }
+        
+        // Fallback para localStorage
+        localStorage.removeItem(CART_STORAGE_KEY);
+    }
+
+    // ==================== OPERAÇÕES DE HISTÓRICO ====================
+
+    async saveOrder(order) {
+        if (this.useIndexedDB) {
+            try {
+                await window.restaurantDB.saveOrder(order);
+                return;
+            } catch (error) {
+                console.error('❌ Erro ao salvar pedido no IndexedDB, usando localStorage:', error);
+            }
+        }
+        
+        // Fallback para localStorage
+        const existing = localStorage.getItem(HISTORY_STORAGE_KEY);
+        const orders = existing ? JSON.parse(existing) : [];
+        orders.push(order);
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(orders));
+    }
+
+    async loadHistory() {
+        if (this.useIndexedDB) {
+            try {
+                return await window.restaurantDB.getTodayOrders();
+            } catch (error) {
+                console.error('❌ Erro ao carregar histórico do IndexedDB, usando localStorage:', error);
+            }
+        }
+        
+        // Fallback para localStorage
+        const saved = localStorage.getItem(HISTORY_STORAGE_KEY);
+        if (!saved) return [];
+        
+        try {
+            const orders = JSON.parse(saved);
+            const today = new Date().toDateString();
+            
+            return orders
+                .filter(order => {
+                    const orderDate = new Date(order.timestamp);
+                    return orderDate.toDateString() === today;
+                })
+                .map(order => ({
+                    ...order,
+                    timestamp: new Date(order.timestamp)
+                }));
+        } catch (error) {
+            console.error('❌ Erro ao processar histórico do localStorage:', error);
+            return [];
+        }
+    }
+
+    async loadHistoryByPeriod(period) {
+        if (this.useIndexedDB) {
+            try {
+                return await window.restaurantDB.getOrdersByPeriod(period);
+            } catch (error) {
+                console.error('❌ Erro ao carregar histórico por período do IndexedDB:', error);
+            }
+        }
+        
+        // Fallback limitado para localStorage (apenas hoje)
+        if (period === 'today') {
+            return await this.loadHistory();
+        }
+        
+        // Para períodos maiores, retornar dados limitados do localStorage
+        const saved = localStorage.getItem(HISTORY_STORAGE_KEY);
+        if (!saved) return [];
+        
+        try {
+            const orders = JSON.parse(saved);
+            const now = new Date();
+            let startDate;
+            
+            switch(period) {
+                case 'week':
+                    startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+                    break;
+                case 'month':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    break;
+                default:
+                    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            }
+            
+            return orders
+                .filter(order => {
+                    const orderDate = new Date(order.timestamp);
+                    return orderDate >= startDate;
+                })
+                .map(order => ({
+                    ...order,
+                    timestamp: new Date(order.timestamp)
+                }));
+        } catch (error) {
+            console.error('❌ Erro ao processar histórico por período:', error);
+            return [];
+        }
+    }
+
+    // ==================== UTILITÁRIOS ====================
+
+    async getStorageInfo() {
+        if (this.useIndexedDB) {
+            try {
+                return await window.restaurantDB.getStats();
+            } catch (error) {
+                console.error('❌ Erro ao obter estatísticas:', error);
+            }
+        }
+        
+        // Informações básicas do localStorage
+        const cartSize = localStorage.getItem(CART_STORAGE_KEY)?.length || 0;
+        const historySize = localStorage.getItem(HISTORY_STORAGE_KEY)?.length || 0;
+        
+        return {
+            storage: 'localStorage',
+            cartSize: cartSize,
+            historySize: historySize,
+            totalSize: cartSize + historySize
+        };
+    }
+
+    isReady() {
+        return this.isInitialized;
+    }
+
+    isUsingIndexedDB() {
+        return this.useIndexedDB;
+    }
+}
+
+// Instância global do gerenciador de armazenamento
+const storageManager = new StorageManager();
 
 // Elementos DOM
 const menuGrid = document.getElementById('menu-grid');
@@ -119,13 +344,30 @@ function clearAllStoredData() {
 }
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Se houver erro persistente, descomente a linha abaixo para limpar dados:
-    // clearAllStoredData();
-    
-    loadStoredData();
-    loadMenu();
-    setupEventListeners();
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // Inicializar sistema de armazenamento
+        await storageManager.init();
+        
+        // Carregar dados após inicialização
+        await loadStoredData();
+        
+        // Carregar menu e configurar eventos
+        loadMenu();
+        setupEventListeners();
+        
+        // Log do sistema ativo
+        const storageInfo = await storageManager.getStorageInfo();
+        console.log('🎯 Sistema iniciado:', storageInfo);
+        
+    } catch (error) {
+        console.error('❌ Erro na inicialização:', error);
+        
+        // Fallback para localStorage em caso de erro
+        loadStoredDataFallback();
+        loadMenu();
+        setupEventListeners();
+    }
 });
 
 // Configurar event listeners
@@ -226,6 +468,9 @@ function setupEventListeners() {
             updateAnalytics();
         }
     });
+
+    // Event listeners para backup
+    setupBackupEventListeners();
 
     // Fechar tela de pedido confirmado
     document.getElementById('close-order').addEventListener('click', function() {
@@ -448,7 +693,7 @@ function updateOrderSummary() {
 }
 
 // Manipular envio do pedido
-function handleOrderSubmit(e) {
+async function handleOrderSubmit(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
@@ -503,7 +748,7 @@ function handleOrderSubmit(e) {
     };
     
     showOrderConfirmation();
-    saveOrderToHistory();
+            await saveOrderToHistory();
 }
 
 // Mostrar confirmação do pedido
@@ -707,19 +952,25 @@ function hideAllSections() {
 }
 
 // Funções de armazenamento local
-function saveCartToStorage() {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-}
-
-function loadCartFromStorage() {
-    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-    if (savedCart) {
-        cart = JSON.parse(savedCart);
-        updateCartDisplay();
+async function saveCartToStorage() {
+    try {
+        await storageManager.saveCart(cart);
+    } catch (error) {
+        console.error('❌ Erro ao salvar carrinho:', error);
     }
 }
 
-function saveOrderToHistory() {
+async function loadCartFromStorage() {
+    try {
+        cart = await storageManager.loadCart();
+        updateCartDisplay();
+    } catch (error) {
+        console.error('❌ Erro ao carregar carrinho:', error);
+        cart = [];
+    }
+}
+
+async function saveOrderToHistory() {
     if (!currentOrder) return;
     
     // Adicionar timestamp único para o ID
@@ -729,62 +980,30 @@ function saveOrderToHistory() {
         sequentialId: getNextSequentialId()
     };
     
-    orderHistory.unshift(orderWithId); // Adiciona no início (mais recente primeiro)
-    
-    // Manter apenas pedidos do dia atual
-    const today = new Date().toDateString();
-    orderHistory = orderHistory.filter(order => {
-        const orderDate = order.timestamp instanceof Date ? 
-            order.timestamp : new Date(order.timestamp);
-        return orderDate.toDateString() === today;
-    });
-    
-    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(orderHistory));
-    updateHistoryStats();
+    try {
+        await storageManager.saveOrder(orderWithId);
+        orderHistory.unshift(orderWithId); // Adiciona no início (mais recente primeiro)
+        
+        // Manter apenas pedidos do dia atual na memória
+        const today = new Date().toDateString();
+        orderHistory = orderHistory.filter(order => {
+            const orderDate = order.timestamp instanceof Date ? 
+                order.timestamp : new Date(order.timestamp);
+            return orderDate.toDateString() === today;
+        });
+        
+        updateHistoryStats();
+    } catch (error) {
+        console.error('❌ Erro ao salvar pedido no histórico:', error);
+    }
 }
 
-function loadHistoryFromStorage() {
+async function loadHistoryFromStorage() {
     try {
-        const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
-        if (savedHistory) {
-            let parsedHistory = JSON.parse(savedHistory);
-            
-            // Validar e converter dados
-            orderHistory = parsedHistory
-                .filter(order => order && order.timestamp && order.items) // Filtrar dados válidos
-                .map(order => {
-                    try {
-                        return {
-                            ...order,
-                            timestamp: new Date(order.timestamp), // Converter para Date
-                            sequentialId: order.sequentialId || 1 // Garantir sequentialId
-                        };
-                    } catch (e) {
-                        console.warn('Pedido inválido removido:', order);
-                        return null;
-                    }
-                })
-                .filter(order => order !== null); // Remover pedidos inválidos
-            
-            // Filtrar apenas pedidos de hoje
-            const today = new Date().toDateString();
-            orderHistory = orderHistory.filter(order => {
-                try {
-                    return order.timestamp.toDateString() === today;
-                } catch (e) {
-                    console.warn('Timestamp inválido, removendo pedido:', order);
-                    return false;
-                }
-            });
-            
-            // Salvar dados limpos
-            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(orderHistory));
-            updateHistoryStats();
-        }
+        orderHistory = await storageManager.loadHistory();
+        updateHistoryStats();
     } catch (error) {
-        console.error('Erro ao carregar histórico, limpando dados:', error);
-        // Se houver erro, limpar dados corrompidos
-        localStorage.removeItem(HISTORY_STORAGE_KEY);
+        console.error('❌ Erro ao carregar histórico:', error);
         orderHistory = [];
         updateHistoryStats();
     }
@@ -800,9 +1019,45 @@ function getNextSequentialId() {
     return todayOrders.length + 1;
 }
 
-function loadStoredData() {
-    loadCartFromStorage();
-    loadHistoryFromStorage();
+async function loadStoredData() {
+    await loadCartFromStorage();
+    await loadHistoryFromStorage();
+}
+
+// Função de fallback para localStorage (caso IndexedDB falhe)
+function loadStoredDataFallback() {
+    // Carregar carrinho do localStorage
+    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+    if (savedCart) {
+        cart = JSON.parse(savedCart);
+        updateCartDisplay();
+    }
+    
+    // Carregar histórico do localStorage
+    const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (savedHistory) {
+        try {
+            const parsedHistory = JSON.parse(savedHistory);
+            orderHistory = parsedHistory
+                .filter(order => order && order.timestamp && order.items)
+                .map(order => ({
+                    ...order,
+                    timestamp: new Date(order.timestamp),
+                    sequentialId: order.sequentialId || 1
+                }));
+            
+            const today = new Date().toDateString();
+            orderHistory = orderHistory.filter(order => {
+                const orderDate = order.timestamp;
+                return orderDate.toDateString() === today;
+            });
+            
+            updateHistoryStats();
+        } catch (error) {
+            console.error('❌ Erro no fallback do histórico:', error);
+            orderHistory = [];
+        }
+    }
 }
 
 // Funções de histórico
@@ -842,50 +1097,293 @@ function switchTab(tabName) {
             showOrderHistory();
         } else if (tabName === 'analytics') {
             showAnalytics();
+        } else if (tabName === 'backup') {
+            showBackup();
         }
     }
 }
 
 // Funções de analytics
-function showAnalytics() {
-    updateAnalytics();
+async function showAnalytics() {
+    await updateAnalytics();
 }
 
 function hideAnalytics() {
     // Função mantida para compatibilidade, mas não é mais necessária
 }
 
-function updateAnalytics() {
+// Funções de backup
+async function showBackup() {
+    await updateBackupInterface();
+}
+
+async function updateBackupInterface() {
+    try {
+        // Atualizar estatísticas de exportação
+        const storageInfo = await storageManager.getStorageInfo();
+        
+        if (storageInfo) {
+            // Sistema de armazenamento
+            document.getElementById('storage-system').textContent = 
+                storageManager.isUsingIndexedDB() ? 'IndexedDB' : 'localStorage';
+            
+            // Estatísticas básicas
+            const orders = await storageManager.loadHistory();
+            const cart = await storageManager.loadCart();
+            const totalRevenue = orders.reduce((sum, order) => sum + (order.pricing?.total || 0), 0);
+            
+            document.getElementById('total-orders-backup').textContent = orders.length;
+            document.getElementById('total-revenue-backup').textContent = 
+                `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+            document.getElementById('cart-items-backup').textContent = `${cart.length} itens`;
+            
+            // Informações detalhadas
+            document.getElementById('detail-system').textContent = 
+                storageManager.isUsingIndexedDB() ? 'IndexedDB' : 'localStorage';
+            document.getElementById('detail-orders').textContent = orders.length;
+            
+            // Uso de armazenamento
+            if (storageInfo.storage) {
+                const usedMB = (storageInfo.storage.used / 1024 / 1024).toFixed(2);
+                document.getElementById('storage-usage').textContent = `${usedMB} MB`;
+                document.getElementById('detail-space').textContent = 
+                    `${usedMB} MB (${storageInfo.storage.percentage}%)`;
+            } else {
+                document.getElementById('storage-usage').textContent = 'N/A';
+                document.getElementById('detail-space').textContent = 'Não disponível';
+            }
+        }
+        
+        // Verificar backup de emergência
+        const hasPreImportBackup = localStorage.getItem('dcasa_pre_import_backup');
+        const recoveryBtn = document.getElementById('recovery-backup-btn');
+        const recoveryStatus = document.getElementById('recovery-status');
+        
+        if (hasPreImportBackup) {
+            recoveryBtn.disabled = false;
+            recoveryStatus.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <span>Backup de emergência disponível</span>
+            `;
+        } else {
+            recoveryBtn.disabled = true;
+            recoveryStatus.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                <span>Nenhum backup de emergência encontrado</span>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar interface de backup:', error);
+    }
+}
+
+function setupBackupEventListeners() {
+    // Botão de exportar backup
+    document.getElementById('export-backup-btn').addEventListener('click', async function() {
+        try {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando backup...';
+            
+            const result = await window.backupManager.exportFullBackup();
+            
+            if (result.success) {
+                alert(`✅ Backup criado com sucesso!\n\nArquivo: ${result.filename}\nTamanho: ${(result.size / 1024).toFixed(2)} KB`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro ao exportar backup:', error);
+            alert('❌ Erro ao criar backup: ' + error.message);
+        } finally {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-download"></i> Criar Backup Completo';
+        }
+    });
+
+    // Área de upload de arquivo
+    const fileUploadArea = document.getElementById('file-upload-area');
+    const fileInput = document.getElementById('backup-file-input');
+    const importBtn = document.getElementById('import-backup-btn');
+
+    fileUploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Drag and drop
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelection(files[0]);
+        }
+    });
+
+    // Seleção de arquivo
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelection(e.target.files[0]);
+        }
+    });
+
+    function handleFileSelection(file) {
+        if (!file.name.endsWith('.json')) {
+            alert('❌ Formato inválido. Selecione apenas arquivos .json');
+            return;
+        }
+
+        // Atualizar interface
+        fileUploadArea.innerHTML = `
+            <i class="fas fa-file-alt"></i>
+            <p>Arquivo selecionado:</p>
+            <span><strong>${file.name}</strong></span>
+            <br><small>${(file.size / 1024).toFixed(2)} KB</small>
+        `;
+
+        importBtn.disabled = false;
+        
+        // Armazenar arquivo para importação
+        importBtn.selectedFile = file;
+    }
+
+    // Botão de importar backup
+    importBtn.addEventListener('click', async function() {
+        if (!this.selectedFile) {
+            alert('❌ Nenhum arquivo selecionado');
+            return;
+        }
+
+        try {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importando backup...';
+            
+            const result = await window.backupManager.importBackup(this.selectedFile);
+            
+            if (result.success) {
+                alert(`✅ Backup importado com sucesso!\n\nPedidos: ${result.imported.orders}\nCarrinho: ${result.imported.cart} itens\nConfigurações: ${result.imported.settings}`);
+                
+                // Atualizar interface
+                await updateBackupInterface();
+                
+                // Se estiver em outra aba, atualizar também
+                if (typeof updateHistoryStats === 'function') {
+                    updateHistoryStats();
+                }
+            } else {
+                alert('ℹ️ ' + result.message);
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro ao importar backup:', error);
+            alert('❌ Erro ao importar backup: ' + error.message);
+        } finally {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-upload"></i> Importar Backup';
+            this.selectedFile = null;
+            
+            // Resetar área de upload
+            fileUploadArea.innerHTML = `
+                <div class="upload-placeholder">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Clique para selecionar arquivo de backup</p>
+                    <span>Apenas arquivos .json</span>
+                </div>
+            `;
+        }
+    });
+
+    // Botão de recuperação de emergência
+    document.getElementById('recovery-backup-btn').addEventListener('click', async function() {
+        try {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recuperando...';
+            
+            const success = await window.backupManager.recoverPreImportBackup();
+            
+            if (success) {
+                // Atualizar interface
+                await updateBackupInterface();
+                
+                // Atualizar outras interfaces
+                if (typeof updateHistoryStats === 'function') {
+                    updateHistoryStats();
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro na recuperação:', error);
+        } finally {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-undo"></i> Recuperar Dados Anteriores';
+        }
+    });
+
+    // Botão de atualizar informações
+    document.getElementById('refresh-info-btn').addEventListener('click', async function() {
+        try {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Atualizando...';
+            
+            await updateBackupInterface();
+            
+        } catch (error) {
+            console.error('❌ Erro ao atualizar informações:', error);
+        } finally {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Informações';
+        }
+    });
+}
+
+async function updateAnalytics() {
     const period = document.getElementById('analytics-period').value;
-    const filteredOrders = getFilteredOrders(period);
+    const filteredOrders = await getFilteredOrders(period);
     
     updateKPIs(filteredOrders);
     updateCharts(filteredOrders);
 }
 
-function getFilteredOrders(period) {
-    const now = new Date();
-    let startDate;
-    
-    switch(period) {
-        case 'today':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            break;
-        case 'week':
-            startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-            break;
-        case 'month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-        default:
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+async function getFilteredOrders(period) {
+    try {
+        return await storageManager.loadHistoryByPeriod(period);
+    } catch (error) {
+        console.error('❌ Erro ao filtrar pedidos:', error);
+        
+        // Fallback para dados em memória
+        if (period === 'today') {
+            return orderHistory;
+        }
+        
+        const now = new Date();
+        let startDate;
+        
+        switch(period) {
+            case 'week':
+                startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+                break;
+            case 'month':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                break;
+            default:
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+        
+        return orderHistory.filter(order => {
+            const orderDate = order.timestamp instanceof Date ? 
+                order.timestamp : new Date(order.timestamp);
+            return orderDate >= startDate;
+        });
     }
-    
-    return orderHistory.filter(order => {
-        const orderDate = order.timestamp instanceof Date ? 
-            order.timestamp : new Date(order.timestamp);
-        return orderDate >= startDate;
-    });
 }
 
 function updateKPIs(orders) {

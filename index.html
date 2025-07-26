@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="indexedDB.js"></script>
+    <script src="backup.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -41,6 +43,9 @@
                 </button>
                 <button class="nav-tab" data-tab="analytics">
                     <i class="fas fa-chart-bar"></i> Relatórios
+                </button>
+                <button class="nav-tab" data-tab="backup">
+                    <i class="fas fa-shield-alt"></i> Backup
                 </button>
             </div>
         </div>
@@ -296,6 +301,140 @@
                         <!-- Order Details for Print -->
                         <div class="order-details" id="order-details">
                             <!-- Order details will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Backup Tab Content -->
+            <section class="tab-content" id="backup-tab" style="display: none;">
+                <div class="backup-section" id="backup-section">
+                    <div class="backup-header">
+                        <h3><i class="fas fa-shield-alt"></i> Backup e Restore - Segurança dos Dados</h3>
+                        <div class="backup-info">
+                            <span class="info-item">Sistema: <strong id="storage-system">Carregando...</strong></span>
+                            <span class="info-item">Uso: <strong id="storage-usage">Calculando...</strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="backup-grid">
+                        <!-- Export Section -->
+                        <div class="backup-card export-card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-download"></i> Exportar Backup</h4>
+                                <p>Faça backup completo dos dados do restaurante</p>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="backup-stats" id="export-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Pedidos:</span>
+                                        <span class="stat-value" id="total-orders-backup">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Faturamento:</span>
+                                        <span class="stat-value" id="total-revenue-backup">R$ 0,00</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Carrinho:</span>
+                                        <span class="stat-value" id="cart-items-backup">0 itens</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="backup-btn export-btn" id="export-backup-btn">
+                                    <i class="fas fa-download"></i>
+                                    Criar Backup Completo
+                                </button>
+                                
+                                <div class="backup-note">
+                                    <i class="fas fa-info-circle"></i>
+                                    Arquivo JSON com todos os dados será baixado
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Import Section -->
+                        <div class="backup-card import-card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-upload"></i> Importar Backup</h4>
+                                <p>Restaure dados de um arquivo de backup</p>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="file-upload-area" id="file-upload-area">
+                                    <input type="file" id="backup-file-input" accept=".json" style="display: none;">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p>Clique para selecionar arquivo de backup</p>
+                                        <span>Apenas arquivos .json</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="backup-btn import-btn" id="import-backup-btn" disabled>
+                                    <i class="fas fa-upload"></i>
+                                    Importar Backup
+                                </button>
+                                
+                                <div class="backup-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Atenção:</strong> Importar substituirá todos os dados atuais
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recovery Section -->
+                        <div class="backup-card recovery-card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-history"></i> Recuperação de Emergência</h4>
+                                <p>Restaure dados anteriores à última importação</p>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="recovery-status" id="recovery-status">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Verificando backup de emergência...</span>
+                                </div>
+                                
+                                <button class="backup-btn recovery-btn" id="recovery-backup-btn" disabled>
+                                    <i class="fas fa-undo"></i>
+                                    Recuperar Dados Anteriores
+                                </button>
+                                
+                                <div class="backup-note">
+                                    <i class="fas fa-info-circle"></i>
+                                    Disponível apenas após importações
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Storage Info Section -->
+                        <div class="backup-card info-card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-database"></i> Informações de Armazenamento</h4>
+                                <p>Detalhes sobre o uso de espaço</p>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="storage-details" id="storage-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Sistema:</span>
+                                        <span class="detail-value" id="detail-system">IndexedDB</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Pedidos armazenados:</span>
+                                        <span class="detail-value" id="detail-orders">0</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Espaço utilizado:</span>
+                                        <span class="detail-value" id="detail-space">Calculando...</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="backup-btn info-btn" id="refresh-info-btn">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Atualizar Informações
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

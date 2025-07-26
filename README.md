@@ -167,7 +167,7 @@ Contribuições são bem-vindas! Sinta-se livre para:
 
 ## 📞 Suporte
 
-Para dúvidas ou sugestões, abra uma [issue](https://github.com/SEU_USUARIO/cardapio-digital/issues) no repositório.
+Para dúvidas ou sugestões, abra uma [issue](https://github.com/JonathanSM-dev/cardapio-digital/issues) no repositório.
 
 ---
 
