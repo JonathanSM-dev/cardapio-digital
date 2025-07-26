@@ -112,7 +112,7 @@ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 No arquivo `script.js`, procure por:
 
 ```javascript
-document.getElementById('delivery-fee').value = '5.00';
+document.getElementById('delivery-fee').value = '9.00';
 ```
 
 ##  Compatibilidade

@@ -461,7 +461,7 @@ function setupEventListeners() {
         } else {
             deliveryFeeGroup.style.display = 'block';
             deliveryFeeRow.style.display = 'flex';
-            document.getElementById('delivery-fee').value = '5.00';
+            document.getElementById('delivery-fee').value = '9.00';
         }
         updateOrderSummary();
     });
@@ -991,7 +991,7 @@ function startNewOrder() {
     
     // Limpar formulário
     document.getElementById('checkout-form').reset();
-    document.getElementById('delivery-fee').value = '5.00';
+    document.getElementById('delivery-fee').value = '9.00';
     document.getElementById('discount-value').value = '0';
     document.getElementById('discount-type').value = 'percent';
     document.getElementById('delivery-type').value = 'entrega';
@@ -1063,6 +1063,37 @@ async function saveOrderToHistory() {
         });
         
         updateHistoryStats();
+        
+        // Atualizar dashboard da aba "Hoje" imediatamente
+        // Forçar atualização incluindo o pedido recém-criado
+        updateDashboardWithNewOrder(orderWithId);
+        
+        // Atualizar analytics se estiver sendo visualizado
+        if (document.getElementById('analytics-main-section') && 
+            document.getElementById('analytics-main-section').style.display !== 'none') {
+            updateMainAnalytics();
+        }
+        
+        // Atualizar analytics da sub-seção se estiver sendo visualizada
+        if (document.getElementById('analytics-section') && 
+            document.getElementById('analytics-section').style.display !== 'none') {
+            updateAnalytics();
+        }
+        
+        // Atualizar histórico principal se estiver sendo visualizado
+        if (document.getElementById('history-tab') && 
+            document.getElementById('history-tab').classList.contains('active')) {
+            updateMainHistoryStats();
+            renderOrderHistory();
+        }
+        
+        // Limpar carrinho após salvar o pedido
+        cart = [];
+        updateCartDisplay();
+        saveCartToStorage();
+        
+        console.log('✅ Pedido salvo e carrinho limpo');
+        
     } catch (error) {
         console.error('❌ Erro ao salvar pedido no histórico:', error);
     }
@@ -1274,6 +1305,66 @@ async function updateDashboard() {
         if (avgEl) avgEl.textContent = 'R$ 0,00';
         
         updateTodayOrdersPreview([]);
+    }
+}
+
+// Atualizar dashboard incluindo pedido recém-criado
+async function updateDashboardWithNewOrder(newOrder) {
+    try {
+        // Buscar pedidos de hoje
+        let todayOrders = [];
+        
+        try {
+            const allOrders = await storageManager.loadHistory();
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+            
+            todayOrders = allOrders.filter(order => {
+                const orderDate = new Date(order.timestamp);
+                return orderDate >= startOfDay && orderDate <= endOfDay;
+            });
+        } catch (storageError) {
+            console.warn('Erro no storage, usando dados em memória:', storageError);
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+            
+            todayOrders = orderHistory.filter(order => {
+                const orderDate = new Date(order.timestamp);
+                return orderDate >= startOfDay && orderDate <= endOfDay;
+            });
+        }
+        
+        // Garantir que o pedido recém-criado esteja incluído
+        if (newOrder && !todayOrders.find(order => order.id === newOrder.id)) {
+            todayOrders.unshift(newOrder);
+        }
+        
+        // Calcular estatísticas
+        const totalRevenue = todayOrders.reduce((sum, order) => sum + (order.pricing?.total || 0), 0);
+        const totalOrders = todayOrders.length;
+        const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        
+        // Atualizar cards de estatísticas
+        const revenueEl = document.getElementById('today-revenue');
+        const ordersEl = document.getElementById('today-orders');
+        const avgEl = document.getElementById('today-avg');
+        
+        if (revenueEl) revenueEl.textContent = `R$ ${totalRevenue.toFixed(2)}`;
+        if (ordersEl) ordersEl.textContent = totalOrders;
+        if (avgEl) avgEl.textContent = `R$ ${avgTicket.toFixed(2)}`;
+        
+        // Atualizar preview dos pedidos (últimos 5, com o mais recente primeiro)
+        const sortedOrders = todayOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        updateTodayOrdersPreview(sortedOrders.slice(0, 5));
+        
+        console.log('✅ Dashboard atualizado com pedido recém-criado:', { totalOrders, totalRevenue, avgTicket });
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar dashboard com novo pedido:', error);
+        // Fallback para função normal
+        updateDashboard();
     }
 }
 
