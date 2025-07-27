@@ -1225,20 +1225,35 @@ body {
     visibility: hidden;
   }
   
-  /* Mostra apenas o recibo */
+  /* Mostra apenas a área de impressão e seu conteúdo */
+  .print-area,
+  .print-area *,
   .receipt,
   .receipt * {
     visibility: visible;
   }
   
-  .receipt {
+  .print-area {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
-    padding: 10mm !important;
+    padding: 0 !important;
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  .receipt {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 15mm !important;
     page-break-inside: avoid;
     page-break-after: avoid;
     box-shadow: none !important;
@@ -1246,31 +1261,78 @@ body {
     background: white !important;
     height: auto !important;
     overflow: visible !important;
+    font-family: 'Courier New', monospace !important;
   }
   
   .receipt-header {
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     border-bottom: 1px dashed #000;
-    padding-bottom: 5px;
+    padding-bottom: 10px;
+  }
+  
+  .receipt-header h2 {
+    font-size: 18px !important;
+    font-weight: bold !important;
+    margin: 5px 0 !important;
+    color: #000 !important;
+  }
+  
+  .receipt-header p {
+    font-size: 12px !important;
+    margin: 2px 0 !important;
+    color: #000 !important;
+  }
+  
+  .receipt-info {
+    margin: 15px 0;
+  }
+  
+  .receipt-info p {
+    font-size: 11px !important;
+    margin: 3px 0 !important;
+    color: #000 !important;
+    line-height: 1.2 !important;
   }
   
   .receipt-items {
-    margin: 10px 0;
+    margin: 15px 0;
+  }
+  
+  .receipt-items > p {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    margin: 5px 0 !important;
+    color: #000 !important;
   }
   
   .receipt-item {
-    display: flex;
-    justify-content: space-between;
-    margin: 3px 0;
-    font-size: 11px;
+    display: flex !important;
+    justify-content: space-between !important;
+    margin: 4px 0 !important;
+    font-size: 11px !important;
+    color: #000 !important;
+    line-height: 1.2 !important;
+  }
+  
+  .receipt-item span {
+    color: #000 !important;
   }
   
   .receipt-total {
     border-top: 1px dashed #000;
-    padding-top: 5px;
-    margin-top: 10px;
-    font-weight: bold;
+    padding-top: 10px;
+    margin-top: 15px;
+  }
+  
+  .receipt-total p {
+    font-size: 12px !important;
+    margin: 2px 0 !important;
+    color: #000 !important;
+  }
+  
+  .receipt-total .receipt-item {
+    font-weight: bold !important;
   }
   
   /* Elementos do recibo devem ser compactos */
@@ -1279,48 +1341,54 @@ body {
   .receipt-items,
   .receipt-total {
     page-break-inside: avoid;
-    margin-bottom: 8px !important;
   }
   
   /* Evitar quebras desnecessárias */
   .receipt-item {
     page-break-inside: avoid;
-    margin: 2px 0 !important;
-  }
-  
-  /* Compactar espaçamentos */
-  .receipt * {
-    margin-top: 0 !important;
-    margin-bottom: 3px !important;
   }
   
   /* Estilizar elementos específicos do recibo */
   .receipt h2 {
-    font-size: 16px;
-    margin: 5px 0;
+    font-size: 18px !important;
+    margin: 5px 0 !important;
+    color: #000 !important;
+    font-weight: bold !important;
   }
   
   .receipt h3 {
-    font-size: 14px;
-    margin: 3px 0;
+    font-size: 14px !important;
+    margin: 3px 0 !important;
+    color: #000 !important;
+    font-weight: bold !important;
   }
   
   .receipt p {
-    margin: 2px 0;
-    font-size: 11px;
+    margin: 2px 0 !important;
+    font-size: 11px !important;
+    color: #000 !important;
   }
   
   .receipt strong {
-    font-weight: bold;
+    font-weight: bold !important;
+    color: #000 !important;
   }
   
-  /* Otimizar espaçamento */
-  .receipt > * {
-    margin-bottom: 5px;
+  /* Garantir que textos sejam pretos */
+  .receipt * {
+    color: #000 !important;
   }
   
-  .receipt > *:last-child {
-    margin-bottom: 0;
+  /* Rodapé da comanda */
+  .receipt > div:last-child {
+    margin-top: 20px !important;
+    text-align: center !important;
+  }
+  
+  .receipt > div:last-child p {
+    font-size: 10px !important;
+    margin: 1px 0 !important;
+    color: #000 !important;
   }
 }
 

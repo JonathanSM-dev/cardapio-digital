@@ -920,66 +920,68 @@ function printOrder() {
 // Criar HTML para impressão
 function createPrintHTML() {
     return `
-        <div class="print-header">
-            <h1>D'CASA & CIA ASSADOS</h1>
-            <p>COMANDA DE PEDIDO</p>
-            <p>================================</p>
-        </div>
-        
-        <div class="print-info">
-            <div><strong>PEDIDO: #${currentOrder.id}</strong></div>
-            <div>${currentOrder.timestamp.toLocaleDateString('pt-BR')} ${currentOrder.timestamp.toLocaleTimeString('pt-BR')}</div>
-            <div>--------------------------------</div>
-            <div>CLIENTE: ${currentOrder.customer.name}</div>
-            <div>FONE: ${currentOrder.customer.phone}</div>
-            <div>PAGTO: ${currentOrder.payment.method.toUpperCase()}</div>
-            ${currentOrder.delivery.type === 'entrega' ? 
-                `<div>ENDERECO: ${currentOrder.customer.address}</div>` : 
-                '<div>RETIRADA NO LOCAL</div>'
-            }
-            ${currentOrder.notes ? `<div>OBS: ${currentOrder.notes}</div>` : ''}
-            <div>--------------------------------</div>
-        </div>
-        
-        <div class="print-items">
-            <div><strong>ITENS DO PEDIDO:</strong></div>
-            ${currentOrder.items.map(item => `
-                <div class="print-item">
-                    <div>${item.quantity}x ${item.name}</div>
-                    <div style="text-align: right;">R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</div>
-                </div>
-            `).join('')}
-            <div>--------------------------------</div>
-        </div>
-        
-        <div class="print-total">
-            <div style="display: flex; justify-content: space-between;">
-                <span>SUBTOTAL:</span>
-                <span>R$ ${currentOrder.pricing.subtotal.toFixed(2).replace('.', ',')}</span>
+        <div class="receipt">
+            <div class="receipt-header">
+                <h2>D'CASA & CIA ASSADOS</h2>
+                <p>COMANDA DE PEDIDO</p>
+                <p>================================</p>
             </div>
-            ${currentOrder.pricing.discountValue > 0 ? `
-                <div style="display: flex; justify-content: space-between;">
-                    <span>DESCONTO (${currentOrder.pricing.discountDisplay}):</span>
-                    <span>-R$ ${currentOrder.pricing.discountAmount.toFixed(2).replace('.', ',')}</span>
-                </div>
-            ` : ''}
-            ${currentOrder.delivery.type === 'entrega' ? `
-                <div style="display: flex; justify-content: space-between;">
-                    <span>TAXA ENTREGA:</span>
-                    <span>R$ ${currentOrder.pricing.deliveryFee.toFixed(2).replace('.', ',')}</span>
-                </div>
-            ` : ''}
-            <div>================================</div>
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px;">
-                <span>TOTAL:</span>
-                <span>R$ ${(currentOrder.pricing?.total || 0).toFixed(2).replace('.', ',')}</span>
+            
+            <div class="receipt-info">
+                <p><strong>PEDIDO: #${currentOrder.id}</strong></p>
+                <p>${currentOrder.timestamp.toLocaleDateString('pt-BR')} ${currentOrder.timestamp.toLocaleTimeString('pt-BR')}</p>
+                <p>--------------------------------</p>
+                <p>CLIENTE: ${currentOrder.customer.name}</p>
+                <p>FONE: ${currentOrder.customer.phone}</p>
+                <p>PAGTO: ${currentOrder.payment.method.toUpperCase()}</p>
+                ${currentOrder.delivery.type === 'entrega' ? 
+                    `<p>ENDERECO: ${currentOrder.customer.address}</p>` : 
+                    '<p>RETIRADA NO LOCAL</p>'
+                }
+                ${currentOrder.notes ? `<p>OBS: ${currentOrder.notes}</p>` : ''}
+                <p>--------------------------------</p>
             </div>
-            <div>================================</div>
-        </div>
-        
-        <div style="text-align: center; margin-top: 15px; font-size: 11px;">
-            <div>Obrigado pela preferencia!</div>
-            <div>Volte sempre!</div>
+            
+            <div class="receipt-items">
+                <p><strong>ITENS DO PEDIDO:</strong></p>
+                ${currentOrder.items.map(item => `
+                    <div class="receipt-item">
+                        <span>${item.quantity}x ${item.name}</span>
+                        <span>R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+                    </div>
+                `).join('')}
+                <p>--------------------------------</p>
+            </div>
+            
+            <div class="receipt-total">
+                <div class="receipt-item">
+                    <span>SUBTOTAL:</span>
+                    <span>R$ ${currentOrder.pricing.subtotal.toFixed(2).replace('.', ',')}</span>
+                </div>
+                ${currentOrder.pricing.discountValue > 0 ? `
+                    <div class="receipt-item">
+                        <span>DESCONTO (${currentOrder.pricing.discountDisplay}):</span>
+                        <span>-R$ ${currentOrder.pricing.discountAmount.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                ` : ''}
+                ${currentOrder.delivery.type === 'entrega' ? `
+                    <div class="receipt-item">
+                        <span>TAXA ENTREGA:</span>
+                        <span>R$ ${currentOrder.pricing.deliveryFee.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                ` : ''}
+                <p>================================</p>
+                <div class="receipt-item" style="font-weight: bold; font-size: 14px;">
+                    <span>TOTAL:</span>
+                    <span>R$ ${(currentOrder.pricing?.total || 0).toFixed(2).replace('.', ',')}</span>
+                </div>
+                <p>================================</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px; font-size: 11px;">
+                <p>Obrigado pela preferencia!</p>
+                <p>Volte sempre!</p>
+            </div>
         </div>
     `;
 }
@@ -2988,4 +2990,58 @@ function showToast(message) {
         toast.style.animation = 'slideIn 0.3s ease reverse';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
-} 
+}
+
+// Função de teste de impressão
+function testPrint() {
+    const testOrder = {
+        id: 'TESTE',
+        timestamp: new Date(),
+        customer: {
+            name: 'Cliente Teste',
+            phone: '(11) 99999-9999',
+            address: 'Endereço de teste, 123'
+        },
+        delivery: {
+            type: 'entrega'
+        },
+        payment: {
+            method: 'dinheiro'
+        },
+        items: [
+            {
+                name: 'Costela Miga',
+                quantity: 1,
+                price: 90.00
+            },
+            {
+                name: 'Coca Cola 2L',
+                quantity: 1,
+                price: 15.00
+            }
+        ],
+        pricing: {
+            subtotal: 105.00,
+            discountValue: 0,
+            discountAmount: 0,
+            discountDisplay: '',
+            deliveryFee: 9.00,
+            total: 114.00
+        },
+        notes: 'Pedido de teste para verificar impressão'
+    };
+    
+    // Temporariamente definir como pedido atual
+    const originalOrder = currentOrder;
+    currentOrder = testOrder;
+    
+    // Imprimir
+    printOrder();
+    
+    // Restaurar pedido original
+    currentOrder = originalOrder;
+    
+    console.log('✅ Teste de impressão executado');
+}
+
+// Imprimir pedido
