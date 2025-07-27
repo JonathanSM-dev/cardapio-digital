@@ -27,6 +27,29 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- QZ Tray Script -->
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
+    <script>
+        // Debug QZ Tray loading
+        console.log('🔍 Verificando carregamento do QZ Tray...');
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                console.log('🔍 QZ Tray disponível?', typeof qz !== 'undefined');
+                if (typeof qz !== 'undefined') {
+                    console.log('✅ QZ objeto:', qz);
+                    console.log('🔗 QZ websockets:', qz.websockets);
+                    console.log('🖨️ QZ printers:', qz.printers);
+                    console.log('⚙️ QZ configs:', qz.configs);
+                    console.log('📄 QZ print:', qz.print);
+                } else {
+                    console.error('❌ QZ Tray não carregou!');
+                }
+            }, 1000);
+        });
+    </script>
+    
+    <script src="qz-thermal.js"></script>
     <script src="indexedDB.js"></script>
     <script src="backup.js"></script>
     <script src="pwa.js"></script>
@@ -117,6 +140,10 @@
                             <button class="action-btn secondary" onclick="testPrint()">
                                 <i class="fas fa-print"></i>
                                 <span>Teste de Impressão</span>
+                            </button>
+                            <button class="action-btn secondary" onclick="window.thermalPrinter?.selectPrinter()">
+                                <i class="fas fa-cog"></i>
+                                <span>Configurar Impressora</span>
                             </button>
                         </div>
                     </div>

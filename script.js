@@ -910,29 +910,116 @@ function createOrderDetailsHTML() {
     `;
 }
 
-// Imprimir pedido
+// Função de impressão térmica inteligente
 function printOrder() {
-    const device = detectDevice();
+    // Verificar se QZ Tray está disponível
+    if (window.thermalPrinter && window.thermalPrinter.isQZReady && currentOrder) {
+        console.log('🖨️ Imprimindo via QZ Tray (impressão térmica profissional)');
+        window.thermalPrinter.printReceipt(currentOrder);
+        return;
+    }
+    
+    // Fallback para impressão padrão do navegador
+    console.log('📄 Usando impressão padrão do navegador');
     const printArea = document.getElementById('print-area');
     
-    // Usar função adaptativa
-    printArea.innerHTML = createAdaptivePrintHTML();
+    printArea.innerHTML = createThermalPrintHTML();
     printArea.style.display = 'block';
-    
-    // Log para debug
-    console.log(`🖨️ Imprimindo em formato ${device.format} para dispositivo ${device.type}`);
-    console.log(`📱 Dimensões da tela: ${device.width}x${device.height}`);
-    
-    // Adicionar classe CSS específica para o dispositivo
-    document.body.classList.add(`print-${device.type}`);
     
     setTimeout(() => {
         window.print();
         printArea.style.display = 'none';
-        
-        // Remover classe após impressão
-        document.body.classList.remove(`print-${device.type}`);
     }, 100);
+}
+
+// Função para criar HTML térmico compacto
+function createThermalPrintHTML() {
+    // Truncar textos para caber na impressora térmica
+    const truncateText = (text, maxLength) => {
+        if (text.length > maxLength) {
+            return text.substring(0, maxLength - 3) + '...';
+        }
+        return text;
+    };
+    
+    // Data/hora compacta
+    const dateTime = `${currentOrder.timestamp.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+    })} ${currentOrder.timestamp.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    })}`;
+    
+    return `
+        <div class="receipt">
+            <div class="receipt-header">
+                <h2>D'CASA & CIA ASSADOS</h2>
+                <p>COMANDA</p>
+                <p>========================</p>
+            </div>
+            
+            <div class="receipt-info">
+                <p><strong>PEDIDO: #${currentOrder.id}</strong></p>
+                <p>${dateTime}</p>
+                <p>------------------------</p>
+                <p>CLIENTE: ${truncateText(currentOrder.customer.name, 20)}</p>
+                <p>FONE: ${currentOrder.customer.phone}</p>
+                <p>PAGTO: ${currentOrder.payment.method.toUpperCase()}</p>
+                ${currentOrder.delivery.type === 'entrega' ? 
+                    `<p>ENDERECO: ${truncateText(currentOrder.customer.address, 25)}</p>` : 
+                    '<p>RETIRADA NO LOCAL</p>'
+                }
+                ${currentOrder.notes ? `<p>OBS: ${truncateText(currentOrder.notes, 20)}</p>` : ''}
+                <p>------------------------</p>
+            </div>
+            
+            <div class="receipt-items">
+                <p><strong>ITENS DO PEDIDO:</strong></p>
+                ${currentOrder.items.map(item => {
+                    const itemName = truncateText(item.name, 12);
+                    return `
+                        <div class="receipt-item">
+                            <span>${item.quantity}x ${itemName}</span>
+                            <span>R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    `;
+                }).join('')}
+                <p>------------------------</p>
+            </div>
+            
+            <div class="receipt-total">
+                <div class="receipt-item">
+                    <span>SUBTOTAL:</span>
+                    <span>R$ ${currentOrder.pricing.subtotal.toFixed(2).replace('.', ',')}</span>
+                </div>
+                ${currentOrder.pricing.discountValue > 0 ? `
+                    <div class="receipt-item">
+                        <span>DESCONTO (${currentOrder.pricing.discountDisplay}):</span>
+                        <span>-R$ ${currentOrder.pricing.discountAmount.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                ` : ''}
+                ${currentOrder.delivery.type === 'entrega' ? `
+                    <div class="receipt-item">
+                        <span>TAXA ENTREGA:</span>
+                        <span>R$ ${currentOrder.pricing.deliveryFee.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                ` : ''}
+                <p>========================</p>
+                <div class="receipt-item" style="font-weight: bold;">
+                    <span>TOTAL:</span>
+                    <span>R$ ${(currentOrder.pricing?.total || 0).toFixed(2).replace('.', ',')}</span>
+                </div>
+                <p>========================</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2mm;">
+                <p>Obrigado pela preferencia!</p>
+                <p>Volte sempre!</p>
+            </div>
+        </div>
+    `;
 }
 
 // Função para detectar tipo de dispositivo
@@ -3087,16 +3174,13 @@ function showToast(message) {
 
 // Função de teste de impressão
 function testPrint() {
-    // Mostrar informações do dispositivo
-    updateDeviceInfo();
-    
     const testOrder = {
         id: 'TESTE',
         timestamp: new Date(),
         customer: {
-            name: 'Cliente Teste',
+            name: 'Cliente Teste da Silva',
             phone: '(11) 99999-9999',
-            address: 'Endereço de teste, 123 - Bairro Central, CEP 12345-678'
+            address: 'Rua das Flores, 123 - Centro - CEP 12345-678'
         },
         delivery: {
             type: 'entrega'
@@ -3106,17 +3190,17 @@ function testPrint() {
         },
         items: [
             {
-                name: 'Costela Miga Especial com Temperos',
+                name: 'Costela Miga Especial',
                 quantity: 2,
                 price: 90.00
             },
             {
-                name: 'Coca Cola 2L Gelada',
+                name: 'Coca Cola 2L',
                 quantity: 1,
                 price: 15.00
             },
             {
-                name: 'Frango Recheado Mandioca com Bacon',
+                name: 'Frango Recheado',
                 quantity: 1,
                 price: 58.00
             }
@@ -3129,7 +3213,7 @@ function testPrint() {
             deliveryFee: 9.00,
             total: 236.70
         },
-        notes: 'Teste de impressão adaptativa - verificar formatação em diferentes dispositivos'
+        notes: 'Teste de impressão térmica compacta'
     };
     
     // Temporariamente definir como pedido atual
@@ -3142,7 +3226,7 @@ function testPrint() {
     // Restaurar pedido original
     currentOrder = originalOrder;
     
-    console.log('✅ Teste de impressão adaptativa executado');
+    console.log('✅ Teste de impressão térmica executado');
 }
 
 // Imprimir pedido

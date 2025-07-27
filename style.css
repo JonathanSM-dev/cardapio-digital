@@ -1196,11 +1196,12 @@ body {
     border-bottom: none;
 }
 
-/* ===== CSS DE IMPRESSÃO OTIMIZADO ===== */
+/* ===== CSS DE IMPRESSÃO TÉRMICA COMPACTA ===== */
 @media print {
   @page {
-    size: A4;
-    margin: 10mm;
+    size: 80mm auto;
+    margin: 0;
+    padding: 0;
   }
   
   * {
@@ -1213,11 +1214,12 @@ body {
   body {
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 12px;
-    line-height: 1.3;
+    font-size: 9px !important;
+    line-height: 1.2 !important;
     background: white !important;
     height: auto !important;
     overflow: visible !important;
+    font-family: 'Courier New', monospace !important;
   }
   
   /* Oculta todos os elementos não relacionados à impressão */
@@ -1250,10 +1252,10 @@ body {
     position: relative !important;
     left: 0 !important;
     top: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
     margin: 0 !important;
-    padding: 15mm !important;
+    padding: 2mm !important;
     page-break-inside: avoid;
     page-break-after: avoid;
     box-shadow: none !important;
@@ -1262,57 +1264,60 @@ body {
     height: auto !important;
     overflow: visible !important;
     font-family: 'Courier New', monospace !important;
+    font-size: 8px !important;
   }
   
   .receipt-header {
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 3mm;
     border-bottom: 1px dashed #000;
-    padding-bottom: 10px;
+    padding-bottom: 2mm;
   }
   
   .receipt-header h2 {
-    font-size: 18px !important;
+    font-size: 10px !important;
     font-weight: bold !important;
-    margin: 5px 0 !important;
+    margin: 1mm 0 !important;
     color: #000 !important;
+    line-height: 1.1 !important;
   }
   
   .receipt-header p {
-    font-size: 12px !important;
-    margin: 2px 0 !important;
+    font-size: 8px !important;
+    margin: 0.5mm 0 !important;
     color: #000 !important;
+    line-height: 1.1 !important;
   }
   
   .receipt-info {
-    margin: 15px 0;
+    margin: 2mm 0;
   }
   
   .receipt-info p {
-    font-size: 11px !important;
-    margin: 3px 0 !important;
+    font-size: 7px !important;
+    margin: 0.5mm 0 !important;
     color: #000 !important;
-    line-height: 1.2 !important;
+    line-height: 1.1 !important;
   }
   
   .receipt-items {
-    margin: 15px 0;
+    margin: 2mm 0;
   }
   
   .receipt-items > p {
-    font-size: 12px !important;
+    font-size: 8px !important;
     font-weight: bold !important;
-    margin: 5px 0 !important;
+    margin: 1mm 0 !important;
     color: #000 !important;
   }
   
   .receipt-item {
     display: flex !important;
     justify-content: space-between !important;
-    margin: 4px 0 !important;
-    font-size: 11px !important;
+    margin: 0.5mm 0 !important;
+    font-size: 7px !important;
     color: #000 !important;
-    line-height: 1.2 !important;
+    line-height: 1.1 !important;
   }
   
   .receipt-item span {
@@ -1321,18 +1326,19 @@ body {
   
   .receipt-total {
     border-top: 1px dashed #000;
-    padding-top: 10px;
-    margin-top: 15px;
+    padding-top: 2mm;
+    margin-top: 2mm;
   }
   
   .receipt-total p {
-    font-size: 12px !important;
-    margin: 2px 0 !important;
+    font-size: 8px !important;
+    margin: 0.5mm 0 !important;
     color: #000 !important;
   }
   
   .receipt-total .receipt-item {
     font-weight: bold !important;
+    font-size: 7px !important;
   }
   
   /* Elementos do recibo devem ser compactos */
@@ -1381,192 +1387,25 @@ body {
   
   /* Rodapé da comanda */
   .receipt > div:last-child {
-    margin-top: 20px !important;
+    margin-top: 2mm !important;
     text-align: center !important;
   }
   
   .receipt > div:last-child p {
-    font-size: 10px !important;
-    margin: 1px 0 !important;
-    color: #000 !important;
-  }
-}
-
-/* ===== IMPRESSÃO ADAPTATIVA PARA DISPOSITIVOS MÓVEIS ===== */
-@media print and (max-width: 768px) {
-  @page {
-    size: A5;
-    margin: 5mm;
-  }
-  
-  .receipt {
-    padding: 8mm !important;
-    font-size: 10px !important;
-  }
-  
-  .receipt-header h2 {
-    font-size: 14px !important;
-  }
-  
-  .receipt-header p {
-    font-size: 10px !important;
-  }
-  
-  .receipt-info p {
-    font-size: 9px !important;
-  }
-  
-  .receipt-items > p {
-    font-size: 10px !important;
-  }
-  
-  .receipt-item {
-    font-size: 9px !important;
-  }
-  
-  .receipt-total p {
-    font-size: 10px !important;
-  }
-  
-  .receipt > div:last-child p {
-    font-size: 8px !important;
-  }
-}
-
-/* ===== IMPRESSÃO ADAPTATIVA PARA TABLETS ===== */
-@media print and (min-width: 769px) and (max-width: 1024px) {
-  @page {
-    size: A4 portrait;
-    margin: 8mm;
-  }
-  
-  .receipt {
-    padding: 12mm !important;
-  }
-  
-  .receipt-header h2 {
-    font-size: 16px !important;
-  }
-}
-
-/* ===== IMPRESSÃO COMPACTA PARA IMPRESSORAS TÉRMICAS ===== */
-@media print and (max-width: 480px) {
-  @page {
-    size: 80mm auto;
-    margin: 2mm;
-  }
-  
-  .receipt {
-    padding: 3mm !important;
-    font-size: 8px !important;
-    max-width: 76mm !important;
-  }
-  
-  .receipt-header {
-    margin-bottom: 8px;
-    padding-bottom: 5px;
-  }
-  
-  .receipt-header h2 {
-    font-size: 12px !important;
-    margin: 2px 0 !important;
-  }
-  
-  .receipt-header p {
-    font-size: 8px !important;
-    margin: 1px 0 !important;
-  }
-  
-  .receipt-info {
-    margin: 8px 0;
-  }
-  
-  .receipt-info p {
-    font-size: 7px !important;
-    margin: 1px 0 !important;
-    line-height: 1.1 !important;
-  }
-  
-  .receipt-items {
-    margin: 8px 0;
-  }
-  
-  .receipt-items > p {
-    font-size: 8px !important;
-    margin: 2px 0 !important;
-  }
-  
-  .receipt-item {
-    font-size: 7px !important;
-    margin: 2px 0 !important;
-    line-height: 1.1 !important;
-  }
-  
-  .receipt-total {
-    padding-top: 5px;
-    margin-top: 8px;
-  }
-  
-  .receipt-total p {
-    font-size: 8px !important;
-    margin: 1px 0 !important;
-  }
-  
-  .receipt-total .receipt-item {
-    font-size: 7px !important;
-  }
-  
-  .receipt > div:last-child {
-    margin-top: 10px !important;
-  }
-  
-  .receipt > div:last-child p {
     font-size: 6px !important;
-    margin: 0.5px 0 !important;
+    margin: 0.5mm 0 !important;
+    color: #000 !important;
+    line-height: 1.1 !important;
   }
 }
 
-/* ===== IMPRESSÃO PARA TELAS GRANDES/DESKTOP ===== */
-@media print and (min-width: 1025px) {
-  @page {
-    size: A4;
-    margin: 15mm;
-  }
-  
-  .receipt {
-    padding: 20mm !important;
-    max-width: 180mm !important;
-    margin: 0 auto !important;
-  }
-  
-  .receipt-header h2 {
-    font-size: 20px !important;
-  }
-  
-  .receipt-header p {
-    font-size: 14px !important;
-  }
-  
-  .receipt-info p {
-    font-size: 12px !important;
-  }
-  
-  .receipt-items > p {
-    font-size: 14px !important;
-  }
-  
-  .receipt-item {
-    font-size: 12px !important;
-  }
-  
-  .receipt-total p {
-    font-size: 14px !important;
-  }
-  
-  .receipt > div:last-child p {
-    font-size: 11px !important;
-  }
-}
+
+
+
+
+
+
+
 
 /* ===== ESTILOS PARA MELHORIAS DOS ÚLTIMOS PEDIDOS ===== */
 .customer-name {
