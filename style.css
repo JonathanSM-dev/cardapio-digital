@@ -1200,7 +1200,7 @@ body {
 @media print {
   @page {
     size: 80mm auto;
-    margin: 0;
+    margin: 2mm !important; /* Pequena margem na página para evitar cortes */
     padding: 0;
   }
   
@@ -1214,8 +1214,8 @@ body {
   body {
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 9px !important;
-    line-height: 1.2 !important;
+    font-size: 12px !important; /* Aumentado de 9px para 12px */
+    line-height: 1.3 !important; /* Aumentado de 1.2 para 1.3 */
     background: white !important;
     height: auto !important;
     overflow: visible !important;
@@ -1254,8 +1254,8 @@ body {
     top: 0 !important;
     width: 80mm !important;
     max-width: 80mm !important;
-    margin: 0 !important;
-    padding: 2mm !important;
+    margin: 0 auto !important; /* Centralizado com margem automática */
+    padding: 3mm 4mm !important; /* Aumentado padding lateral de 3mm para 4mm */
     page-break-inside: avoid;
     page-break-after: avoid;
     box-shadow: none !important;
@@ -1264,81 +1264,92 @@ body {
     height: auto !important;
     overflow: visible !important;
     font-family: 'Courier New', monospace !important;
-    font-size: 8px !important;
+    font-size: 11px !important; /* Aumentado de 8px para 11px */
   }
   
   .receipt-header {
     text-align: center;
-    margin-bottom: 3mm;
+    margin-bottom: 4mm; /* Aumentado de 3mm para 4mm */
     border-bottom: 1px dashed #000;
-    padding-bottom: 2mm;
+    padding-bottom: 3mm; /* Aumentado de 2mm para 3mm */
   }
   
   .receipt-header h2 {
-    font-size: 10px !important;
+    font-size: 14px !important; /* Aumentado de 10px para 14px */
     font-weight: bold !important;
-    margin: 1mm 0 !important;
+    margin: 2mm 0 !important; /* Aumentado de 1mm para 2mm */
     color: #000 !important;
-    line-height: 1.1 !important;
+    line-height: 1.2 !important;
   }
   
   .receipt-header p {
-    font-size: 8px !important;
-    margin: 0.5mm 0 !important;
+    font-size: 11px !important; /* Aumentado de 8px para 11px */
+    margin: 1mm 0 !important; /* Aumentado de 0.5mm para 1mm */
     color: #000 !important;
-    line-height: 1.1 !important;
+    line-height: 1.2 !important;
   }
   
   .receipt-info {
-    margin: 2mm 0;
+    margin: 3mm 0; /* Aumentado de 2mm para 3mm */
   }
   
   .receipt-info p {
-    font-size: 7px !important;
-    margin: 0.5mm 0 !important;
+    font-size: 11px !important; /* Aumentado de 7px para 11px */
+    margin: 1mm 0 !important; /* Aumentado de 0.5mm para 1mm */
     color: #000 !important;
-    line-height: 1.1 !important;
+    line-height: 1.2 !important;
+    font-weight: bold !important; /* Adicionado negrito */
   }
   
   .receipt-items {
-    margin: 2mm 0;
+    margin: 3mm 0; /* Aumentado de 2mm para 3mm */
   }
   
   .receipt-items > p {
-    font-size: 8px !important;
+    font-size: 12px !important; /* Aumentado de 8px para 12px */
     font-weight: bold !important;
-    margin: 1mm 0 !important;
+    margin: 2mm 0 !important; /* Aumentado de 1mm para 2mm */
     color: #000 !important;
   }
   
   .receipt-item {
-    display: flex !important;
-    justify-content: space-between !important;
-    margin: 0.5mm 0 !important;
-    font-size: 7px !important;
+    display: block !important; /* Mudado de flex para block */
+    margin: 1mm 0 !important; /* Aumentado de 0.5mm para 1mm */
+    font-size: 11px !important; /* Aumentado de 7px para 11px */
     color: #000 !important;
-    line-height: 1.1 !important;
+    line-height: 1.3 !important;
+    font-weight: bold !important; /* Adicionado negrito */
+  }
+  
+  .receipt-item p {
+    margin: 0.5mm 0 !important;
+    font-size: 11px !important;
+    color: #000 !important;
+    font-weight: bold !important;
+    line-height: 1.2 !important;
   }
   
   .receipt-item span {
     color: #000 !important;
+    font-weight: bold !important; /* Adicionado negrito */
   }
   
   .receipt-total {
     border-top: 1px dashed #000;
-    padding-top: 2mm;
-    margin-top: 2mm;
+    padding-top: 3mm; /* Aumentado de 2mm para 3mm */
+    margin-top: 3mm; /* Aumentado de 2mm para 3mm */
   }
   
   .receipt-total p {
-    font-size: 8px !important;
-    margin: 0.5mm 0 !important;
+    font-size: 11px !important; /* Aumentado de 8px para 11px */
+    margin: 1mm 0 !important; /* Aumentado de 0.5mm para 1mm */
     color: #000 !important;
+    font-weight: bold !important; /* Adicionado negrito */
   }
   
   .receipt-total .receipt-item {
     font-weight: bold !important;
-    font-size: 7px !important;
+    font-size: 11px !important; /* Aumentado de 7px para 11px */
   }
   
   /* Elementos do recibo devem ser compactos */
@@ -2584,23 +2595,23 @@ body {
   /* Classes aplicadas dinamicamente pelo JavaScript */
   body.print-thermal .receipt {
     max-width: 80mm !important;
-    font-size: 8px !important;
-    padding: 2mm !important;
+    font-size: 11px !important; /* Aumentado de 8px para 11px */
+    padding: 3mm 4mm !important; /* Padding lateral aumentado */
   }
   
   body.print-mobile .receipt {
-    font-size: 10px !important;
-    padding: 5mm !important;
+    font-size: 12px !important; /* Aumentado de 10px para 12px */
+    padding: 5mm 6mm !important; /* Padding lateral aumentado */
   }
   
   body.print-tablet .receipt {
-    font-size: 11px !important;
-    padding: 10mm !important;
+    font-size: 13px !important; /* Aumentado de 11px para 13px */
+    padding: 10mm 12mm !important; /* Padding lateral aumentado */
   }
   
   body.print-desktop .receipt {
-    font-size: 12px !important;
-    padding: 15mm !important;
+    font-size: 14px !important; /* Aumentado de 12px para 14px */
+    padding: 15mm 18mm !important; /* Padding lateral aumentado */
     max-width: 190mm !important;
     margin: 0 auto !important;
   }

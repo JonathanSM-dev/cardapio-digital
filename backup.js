@@ -106,10 +106,10 @@ class BackupManager {
     getMenuData() {
         // Dados do menu definidos no script principal
         return window.menuData || [
-            { id: 1, name: 'Costela Miga', price: 90.00, category: 'pratos' },
+            { id: 1, name: 'Costela Minga', price: 90.00, category: 'pratos' },
             { id: 2, name: 'Costelinha Suína', price: 90.00, category: 'pratos' },
             { id: 3, name: 'Frango recheado mandioca com bacon', price: 58.00, category: 'pratos' },
-            { id: 4, name: 'Frango recheado Farofa tradicional', price: 56.00, category: 'pratos' },
+            { id: 4, name: 'Frango recheado Farofa tradicional', price: 58.00, category: 'pratos' },
             { id: 5, name: 'Joelho Suino', price: 60.00, category: 'pratos' },
             { id: 6, name: 'Linguiçinha', price: 2.50, category: 'acompanhamentos' },
             { id: 7, name: 'Maionese', price: 12.00, category: 'acompanhamentos' },

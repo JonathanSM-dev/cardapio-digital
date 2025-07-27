@@ -3,7 +3,7 @@ const menuData = [
     // Pratos Principais
     {
         id: 1,
-        name: "Costela Miga",
+        name: "Costela Minga",
         description: "Costela bovina preparada especialmente",
         price: 90.00,
         category: "pratos"
@@ -26,7 +26,7 @@ const menuData = [
         id: 4,
         name: "Frango Recheado Farofa Tradicional",
         description: "Frango recheado com farofa tradicional",
-        price: 56.00,
+        price: 58.00,
         category: "pratos"
     },
     {
@@ -934,12 +934,42 @@ function printOrder() {
 
 // Função para criar HTML térmico compacto
 function createThermalPrintHTML() {
-    // Truncar textos para caber na impressora térmica
-    const truncateText = (text, maxLength) => {
-        if (text.length > maxLength) {
-            return text.substring(0, maxLength - 3) + '...';
+    // Função para quebra de linha inteligente (igual ao QZ Tray)
+    const formatLineWithBreak = (label, text, maxLineLength = 30) => {
+        if (!text) return '';
+        
+        const fullLine = `${label} ${text}`;
+        
+        if (fullLine.length <= maxLineLength) {
+            return `<p>${fullLine}</p>`;
+        } else {
+            // Quebrar linha - label na primeira linha, texto continua na segunda
+            if (text.length <= maxLineLength) {
+                return `<p>${label}</p><p>${text}</p>`;
+            } else {
+                // Texto muito longo - quebrar em múltiplas linhas
+                let result = `<p>${label}</p>`;
+                let remainingText = text;
+                
+                while (remainingText.length > maxLineLength) {
+                    const breakPoint = remainingText.lastIndexOf(' ', maxLineLength);
+                    if (breakPoint > 0) {
+                        result += `<p>${remainingText.substring(0, breakPoint)}</p>`;
+                        remainingText = remainingText.substring(breakPoint + 1);
+                    } else {
+                        // Forçar quebra se não houver espaço
+                        result += `<p>${remainingText.substring(0, maxLineLength)}</p>`;
+                        remainingText = remainingText.substring(maxLineLength);
+                    }
+                }
+                
+                if (remainingText.length > 0) {
+                    result += `<p>${remainingText}</p>`;
+                }
+                
+                return result;
+            }
         }
-        return text;
     };
     
     // Data/hora compacta
@@ -964,25 +994,29 @@ function createThermalPrintHTML() {
                 <p><strong>PEDIDO: #${currentOrder.id}</strong></p>
                 <p>${dateTime}</p>
                 <p>------------------------</p>
-                <p>CLIENTE: ${truncateText(currentOrder.customer.name, 20)}</p>
-                <p>FONE: ${currentOrder.customer.phone}</p>
+                ${formatLineWithBreak('CLIENTE:', currentOrder.customer.name)}
+                ${formatLineWithBreak('FONE:', currentOrder.customer.phone)}
                 <p>PAGTO: ${currentOrder.payment.method.toUpperCase()}</p>
                 ${currentOrder.delivery.type === 'entrega' ? 
-                    `<p>ENDERECO: ${truncateText(currentOrder.customer.address, 25)}</p>` : 
+                    formatLineWithBreak('ENDERECO:', currentOrder.customer.address) : 
                     '<p>RETIRADA NO LOCAL</p>'
                 }
-                ${currentOrder.notes ? `<p>OBS: ${truncateText(currentOrder.notes, 20)}</p>` : ''}
+                ${currentOrder.notes ? formatLineWithBreak('OBS:', currentOrder.notes) : ''}
                 <p>------------------------</p>
             </div>
             
             <div class="receipt-items">
                 <p><strong>ITENS DO PEDIDO:</strong></p>
                 ${currentOrder.items.map(item => {
-                    const itemName = truncateText(item.name, 12);
+                    const itemName = item.name; // Nome completo sem truncar
+                    const price = `R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}`;
+                    const quantity = `${item.quantity}x `;
+                    
+                    // Sempre quebrar em duas linhas para garantir que não haja reticências
                     return `
                         <div class="receipt-item">
-                            <span>${item.quantity}x ${itemName}</span>
-                            <span>R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+                            <p>${quantity}${itemName}</p>
+                            <p style="text-align: right; margin-top: 0;">${price}</p>
                         </div>
                     `;
                 }).join('')}
@@ -990,27 +1024,15 @@ function createThermalPrintHTML() {
             </div>
             
             <div class="receipt-total">
-                <div class="receipt-item">
-                    <span>SUBTOTAL:</span>
-                    <span>R$ ${currentOrder.pricing.subtotal.toFixed(2).replace('.', ',')}</span>
-                </div>
+                <p>SUBTOTAL: R$ ${currentOrder.pricing.subtotal.toFixed(2).replace('.', ',')}</p>
                 ${currentOrder.pricing.discountValue > 0 ? `
-                    <div class="receipt-item">
-                        <span>DESCONTO (${currentOrder.pricing.discountDisplay}):</span>
-                        <span>-R$ ${currentOrder.pricing.discountAmount.toFixed(2).replace('.', ',')}</span>
-                    </div>
+                    <p>DESCONTO: -R$ ${currentOrder.pricing.discountAmount.toFixed(2).replace('.', ',')}</p>
                 ` : ''}
                 ${currentOrder.delivery.type === 'entrega' ? `
-                    <div class="receipt-item">
-                        <span>TAXA ENTREGA:</span>
-                        <span>R$ ${currentOrder.pricing.deliveryFee.toFixed(2).replace('.', ',')}</span>
-                    </div>
+                    <p>ENTREGA: R$ ${currentOrder.pricing.deliveryFee.toFixed(2).replace('.', ',')}</p>
                 ` : ''}
                 <p>========================</p>
-                <div class="receipt-item" style="font-weight: bold;">
-                    <span>TOTAL:</span>
-                    <span>R$ ${(currentOrder.pricing?.total || 0).toFixed(2).replace('.', ',')}</span>
-                </div>
+                <p style="font-size: 14px; font-weight: bold;">TOTAL: R$ ${(currentOrder.pricing?.total || 0).toFixed(2).replace('.', ',')}</p>
                 <p>========================</p>
             </div>
             
@@ -3190,7 +3212,7 @@ function testPrint() {
         },
         items: [
             {
-                name: 'Costela Miga Especial',
+                name: 'Costela Minga Especial',
                 quantity: 2,
                 price: 90.00
             },

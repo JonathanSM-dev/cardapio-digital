@@ -43,7 +43,7 @@ class ThermalPrinter {
             console.error('❌ Erro ao conectar QZ Tray:', error);
             this.isQZReady = false;
             this.showQZStatus(false, 'Erro de conexão');
-            this.showConnectionHelp();
+            // Removido showConnectionHelp() - apenas status no header
         }
     }
 
@@ -250,14 +250,15 @@ class ThermalPrinter {
         commands += ESC + 'a' + '\x01'; // Centralizar
         
         // Cabeçalho
-        commands += ESC + '!' + '\x10'; // Fonte dupla altura
+        commands += ESC + '!' + '\x18'; // Fonte dupla altura e largura
         commands += 'D\'CASA & CIA ASSADOS\n';
-        commands += ESC + '!' + '\x00'; // Fonte normal
+        commands += ESC + '!' + '\x08'; // Fonte normal com negrito
         commands += 'COMANDA\n';
         commands += '========================\n';
         
         // Informações do pedido
         commands += ESC + 'a' + '\x00'; // Alinhar à esquerda
+        commands += ESC + '!' + '\x08'; // Fonte com negrito para melhor legibilidade
         commands += `PEDIDO: #${order.id}\n`;
         
         const dateTime = `${order.timestamp.toLocaleDateString('pt-BR', {
@@ -271,66 +272,71 @@ class ThermalPrinter {
         commands += `${dateTime}\n`;
         commands += '------------------------\n';
         
-        // Dados do cliente
-        commands += `CLIENTE: ${this.truncateText(order.customer.name, 20)}\n`;
-        commands += `FONE: ${order.customer.phone}\n`;
+        // Dados do cliente - com quebra de linha inteligente
+        commands += this.formatLineWithBreak('CLIENTE:', order.customer.name);
+        commands += this.formatLineWithBreak('FONE:', order.customer.phone);
         commands += `PAGTO: ${order.payment.method.toUpperCase()}\n`;
         
         if (order.delivery.type === 'entrega') {
-            commands += `ENDERECO: ${this.truncateText(order.customer.address, 25)}\n`;
+            commands += this.formatLineWithBreak('ENDERECO:', order.customer.address);
         } else {
             commands += 'RETIRADA NO LOCAL\n';
         }
         
         if (order.notes) {
-            commands += `OBS: ${this.truncateText(order.notes, 20)}\n`;
+            commands += this.formatLineWithBreak('OBS:', order.notes);
         }
         
         commands += '------------------------\n';
         
-        // Itens do pedido
-        commands += ESC + '!' + '\x08'; // Fonte negrito
+        // Itens do pedido - mesma fonte das informações do cliente
+        commands += ESC + '!' + '\x18'; // Fonte dupla para título dos itens
         commands += 'ITENS DO PEDIDO:\n';
-        commands += ESC + '!' + '\x00'; // Fonte normal
+        commands += ESC + '!' + '\x08'; // Mesma fonte das informações do cliente
         
         order.items.forEach(item => {
-            const itemName = this.truncateText(item.name, 12);
+            const itemName = item.name;
             const price = `R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}`;
-            const line = `${item.quantity}x ${itemName}`;
-            const spaces = ' '.repeat(Math.max(1, 24 - line.length - price.length));
-            commands += `${line}${spaces}${price}\n`;
+            const quantity = `${item.quantity}x `;
+            
+            // Sempre quebrar em duas linhas para garantir que não haja reticências
+            commands += `${quantity}${itemName}\n`;
+            commands += `${' '.repeat(20)}${price}\n`;
         });
         
         commands += '------------------------\n';
         
-        // Totais
+        // Totais - mesma fonte das informações do cliente
+        commands += ESC + '!' + '\x08'; // Mesma fonte das informações do cliente
         const subtotal = `R$ ${order.pricing.subtotal.toFixed(2).replace('.', ',')}`;
-        commands += `SUBTOTAL:${' '.repeat(24 - 9 - subtotal.length)}${subtotal}\n`;
+        commands += `SUBTOTAL: ${subtotal}\n`;
         
         if (order.pricing.discountValue > 0) {
             const discount = `R$ ${order.pricing.discountAmount.toFixed(2).replace('.', ',')}`;
-            commands += `DESCONTO:${' '.repeat(24 - 9 - discount.length)}-${discount}\n`;
+            commands += `DESCONTO: -${discount}\n`;
         }
         
         if (order.delivery.type === 'entrega') {
             const delivery = `R$ ${order.pricing.deliveryFee.toFixed(2).replace('.', ',')}`;
-            commands += `ENTREGA:${' '.repeat(24 - 8 - delivery.length)}${delivery}\n`;
+            commands += `ENTREGA: ${delivery}\n`;
         }
         
         commands += '========================\n';
         
-        // Total final
-        commands += ESC + '!' + '\x10'; // Fonte dupla
+        // Total final - fonte bem grande
+        commands += ESC + '!' + '\x38'; // Fonte tripla (altura dupla + largura dupla + negrito)
         const total = `R$ ${order.pricing.total.toFixed(2).replace('.', ',')}`;
-        commands += `TOTAL:${' '.repeat(24 - 6 - total.length)}${total}\n`;
+        commands += `TOTAL: ${total}\n`;
         commands += ESC + '!' + '\x00'; // Fonte normal
         
         commands += '========================\n';
         
         // Rodapé
         commands += ESC + 'a' + '\x01'; // Centralizar
+        commands += ESC + '!' + '\x08'; // Fonte com negrito
         commands += 'Obrigado pela preferencia!\n';
         commands += 'Volte sempre!\n\n';
+        commands += ESC + '!' + '\x00'; // Fonte normal
         
         // Cortar papel
         commands += GS + 'V' + '\x41' + '\x03'; // Corte parcial
@@ -338,10 +344,46 @@ class ThermalPrinter {
         return commands;
     }
 
-    truncateText(text, maxLength) {
-        if (text && text.length > maxLength) {
-            return text.substring(0, maxLength - 3) + '...';
+    // Nova função para quebra de linha inteligente
+    formatLineWithBreak(label, text, maxLineLength = 30) {
+        if (!text) return '';
+        
+        const fullLine = `${label} ${text}`;
+        
+        if (fullLine.length <= maxLineLength) {
+            return `${fullLine}\n`;
+        } else {
+            // Quebrar linha - label na primeira linha, texto continua na segunda
+            if (text.length <= maxLineLength) {
+                return `${label}\n${text}\n`;
+            } else {
+                // Texto muito longo - quebrar em múltiplas linhas
+                let result = `${label}\n`;
+                let remainingText = text;
+                
+                while (remainingText.length > maxLineLength) {
+                    const breakPoint = remainingText.lastIndexOf(' ', maxLineLength);
+                    if (breakPoint > 0) {
+                        result += remainingText.substring(0, breakPoint) + '\n';
+                        remainingText = remainingText.substring(breakPoint + 1);
+                    } else {
+                        // Forçar quebra se não houver espaço
+                        result += remainingText.substring(0, maxLineLength) + '\n';
+                        remainingText = remainingText.substring(maxLineLength);
+                    }
+                }
+                
+                if (remainingText.length > 0) {
+                    result += remainingText + '\n';
+                }
+                
+                return result;
+            }
         }
+    }
+
+    truncateText(text, maxLength) {
+        // Agora retorna o texto completo sem truncar
         return text || '';
     }
 
@@ -358,49 +400,25 @@ class ThermalPrinter {
     }
 
     showPrintSuccess() {
-        this.showMessage('✅ Comanda impressa com sucesso!', '#28a745');
+        // Removido - apenas log no console
+        console.log('✅ Comanda impressa com sucesso!');
     }
 
     showPrintError(error) {
-        this.showMessage(`❌ Erro na impressão: ${error}`, '#dc3545');
+        // Removido - apenas log no console
+        console.error('❌ Erro na impressão:', error);
     }
 
-    showMessage(message, color, duration = 3000) {
-        const msgElement = document.createElement('div');
-        msgElement.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: ${color};
-            color: white;
-            padding: 20px 30px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            z-index: 10000;
-            animation: fadeInOut ${duration}ms ease-in-out;
-            max-width: 400px;
-            text-align: center;
-            white-space: pre-line;
-            line-height: 1.4;
-        `;
-        msgElement.innerHTML = message;
-        document.body.appendChild(msgElement);
+    // Função showMessage removida - não será mais usada
 
-        setTimeout(() => {
-            if (msgElement.parentNode) {
-                msgElement.parentNode.removeChild(msgElement);
-            }
-        }, duration);
-    }
+    // Função showConnectionHelp removida - não será mais usada
 
     // Método para configurar impressora manualmente
     async selectPrinter() {
         try {
             // Verificar se QZ está ativo
             if (!this.isQZReady) {
-                this.showMessage('❌ QZ Tray não está conectado. Clique no status para reconectar.', '#dc3545');
+                console.warn('❌ QZ Tray não está conectado');
                 return;
             }
 
@@ -408,7 +426,7 @@ class ThermalPrinter {
             const printers = await qz.printers.find();
             
             if (!printers || printers.length === 0) {
-                this.showMessage('❌ Nenhuma impressora encontrada. Verifique se há impressoras instaladas.', '#dc3545');
+                console.warn('❌ Nenhuma impressora encontrada');
                 return;
             }
             
@@ -418,7 +436,6 @@ class ThermalPrinter {
             
         } catch (error) {
             console.error('❌ Erro ao listar impressoras:', error);
-            this.showMessage(`❌ Erro ao listar impressoras: ${error.message}`, '#dc3545');
         }
     }
 
@@ -496,7 +513,6 @@ class ThermalPrinter {
             if (selected) {
                 this.printerName = selected.value;
                 this.updatePrinterStatus(this.printerName);
-                this.showMessage(`✅ Impressora selecionada: ${this.printerName}`, '#28a745');
                 console.log('✅ Impressora selecionada:', this.printerName);
             }
             document.body.removeChild(modal);
@@ -526,15 +542,14 @@ class ThermalPrinter {
             const testData = [{
                 type: 'raw',
                 format: 'command',
-                data: '\x1b@\x1ba\x01TESTE DE IMPRESSORA\n========================\nSe voce esta lendo isto,\na impressora esta funcionando!\n\n\n\x1dV\x41\x03'
+                data: '\x1b@\x1ba\x01\x1b!\x18TESTE DE IMPRESSORA\x1b!\x08\n========================\n\x1b!\x08Se voce esta lendo isto,\na impressora esta funcionando!\n\nCLIENTE: João da Silva Santos\nFONE: (11) 99999-9999\nENDERECO: Rua das Flores 123\nApartamento 45B Jardim Paulista\n\nITENS DO PEDIDO:\n2x Pizza Calabresa Grande Especial\n                    R$ 45,90\n\nSUBTOTAL: R$ 45,90\nENTREGA: R$ 5,00\n\x1b!\x38TOTAL: R$ 50,90\x1b!\x00\n\n\x1b!\x08Fonte padronizada!\nSem reticencias!\x1b!\x00\n\n\n\x1dV\x41\x03'
             }];
 
             await qz.print(config, testData);
-            this.showMessage('✅ Teste enviado para a impressora!', '#28a745');
+            console.log('✅ Teste enviado para a impressora!');
             
         } catch (error) {
             console.error('❌ Erro no teste:', error);
-            this.showMessage(`❌ Erro no teste: ${error.message}`, '#dc3545');
         }
     }
 }
@@ -545,14 +560,4 @@ document.addEventListener('DOMContentLoaded', () => {
     window.thermalPrinter = new ThermalPrinter();
 });
 
-// CSS para animações
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeInOut {
-        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-        20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-    }
-`;
-document.head.appendChild(style); 
+// CSS das animações removido - não é mais necessário 
