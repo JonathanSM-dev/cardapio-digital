@@ -1392,6 +1392,182 @@ body {
   }
 }
 
+/* ===== IMPRESSÃO ADAPTATIVA PARA DISPOSITIVOS MÓVEIS ===== */
+@media print and (max-width: 768px) {
+  @page {
+    size: A5;
+    margin: 5mm;
+  }
+  
+  .receipt {
+    padding: 8mm !important;
+    font-size: 10px !important;
+  }
+  
+  .receipt-header h2 {
+    font-size: 14px !important;
+  }
+  
+  .receipt-header p {
+    font-size: 10px !important;
+  }
+  
+  .receipt-info p {
+    font-size: 9px !important;
+  }
+  
+  .receipt-items > p {
+    font-size: 10px !important;
+  }
+  
+  .receipt-item {
+    font-size: 9px !important;
+  }
+  
+  .receipt-total p {
+    font-size: 10px !important;
+  }
+  
+  .receipt > div:last-child p {
+    font-size: 8px !important;
+  }
+}
+
+/* ===== IMPRESSÃO ADAPTATIVA PARA TABLETS ===== */
+@media print and (min-width: 769px) and (max-width: 1024px) {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+  
+  .receipt {
+    padding: 12mm !important;
+  }
+  
+  .receipt-header h2 {
+    font-size: 16px !important;
+  }
+}
+
+/* ===== IMPRESSÃO COMPACTA PARA IMPRESSORAS TÉRMICAS ===== */
+@media print and (max-width: 480px) {
+  @page {
+    size: 80mm auto;
+    margin: 2mm;
+  }
+  
+  .receipt {
+    padding: 3mm !important;
+    font-size: 8px !important;
+    max-width: 76mm !important;
+  }
+  
+  .receipt-header {
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+  }
+  
+  .receipt-header h2 {
+    font-size: 12px !important;
+    margin: 2px 0 !important;
+  }
+  
+  .receipt-header p {
+    font-size: 8px !important;
+    margin: 1px 0 !important;
+  }
+  
+  .receipt-info {
+    margin: 8px 0;
+  }
+  
+  .receipt-info p {
+    font-size: 7px !important;
+    margin: 1px 0 !important;
+    line-height: 1.1 !important;
+  }
+  
+  .receipt-items {
+    margin: 8px 0;
+  }
+  
+  .receipt-items > p {
+    font-size: 8px !important;
+    margin: 2px 0 !important;
+  }
+  
+  .receipt-item {
+    font-size: 7px !important;
+    margin: 2px 0 !important;
+    line-height: 1.1 !important;
+  }
+  
+  .receipt-total {
+    padding-top: 5px;
+    margin-top: 8px;
+  }
+  
+  .receipt-total p {
+    font-size: 8px !important;
+    margin: 1px 0 !important;
+  }
+  
+  .receipt-total .receipt-item {
+    font-size: 7px !important;
+  }
+  
+  .receipt > div:last-child {
+    margin-top: 10px !important;
+  }
+  
+  .receipt > div:last-child p {
+    font-size: 6px !important;
+    margin: 0.5px 0 !important;
+  }
+}
+
+/* ===== IMPRESSÃO PARA TELAS GRANDES/DESKTOP ===== */
+@media print and (min-width: 1025px) {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+  
+  .receipt {
+    padding: 20mm !important;
+    max-width: 180mm !important;
+    margin: 0 auto !important;
+  }
+  
+  .receipt-header h2 {
+    font-size: 20px !important;
+  }
+  
+  .receipt-header p {
+    font-size: 14px !important;
+  }
+  
+  .receipt-info p {
+    font-size: 12px !important;
+  }
+  
+  .receipt-items > p {
+    font-size: 14px !important;
+  }
+  
+  .receipt-item {
+    font-size: 12px !important;
+  }
+  
+  .receipt-total p {
+    font-size: 14px !important;
+  }
+  
+  .receipt > div:last-child p {
+    font-size: 11px !important;
+  }
+}
+
 /* ===== ESTILOS PARA MELHORIAS DOS ÚLTIMOS PEDIDOS ===== */
 .customer-name {
   font-size: 0.9em;
@@ -2563,3 +2739,32 @@ body {
 .hidden {
     display: none !important;
 } 
+
+/* ===== CLASSES ESPECÍFICAS POR DISPOSITIVO ===== */
+@media print {
+  /* Classes aplicadas dinamicamente pelo JavaScript */
+  body.print-thermal .receipt {
+    max-width: 80mm !important;
+    font-size: 8px !important;
+    padding: 2mm !important;
+  }
+  
+  body.print-mobile .receipt {
+    font-size: 10px !important;
+    padding: 5mm !important;
+  }
+  
+  body.print-tablet .receipt {
+    font-size: 11px !important;
+    padding: 10mm !important;
+  }
+  
+  body.print-desktop .receipt {
+    font-size: 12px !important;
+    padding: 15mm !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* ===== IMPRESSÃO PARA TELAS GRANDES/DESKTOP ===== */

@@ -365,6 +365,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Inicializar dashboard
         updateDashboard();
         
+        // Mostrar informações do dispositivo na primeira carga
+        setTimeout(() => {
+            updateDeviceInfo();
+        }, 2000);
+        
     } catch (error) {
         console.error('❌ Erro na inicialização:', error);
         
@@ -907,50 +912,135 @@ function createOrderDetailsHTML() {
 
 // Imprimir pedido
 function printOrder() {
+    const device = detectDevice();
     const printArea = document.getElementById('print-area');
-    printArea.innerHTML = createPrintHTML();
+    
+    // Usar função adaptativa
+    printArea.innerHTML = createAdaptivePrintHTML();
     printArea.style.display = 'block';
+    
+    // Log para debug
+    console.log(`🖨️ Imprimindo em formato ${device.format} para dispositivo ${device.type}`);
+    console.log(`📱 Dimensões da tela: ${device.width}x${device.height}`);
+    
+    // Adicionar classe CSS específica para o dispositivo
+    document.body.classList.add(`print-${device.type}`);
     
     setTimeout(() => {
         window.print();
         printArea.style.display = 'none';
+        
+        // Remover classe após impressão
+        document.body.classList.remove(`print-${device.type}`);
     }, 100);
 }
 
-// Criar HTML para impressão
-function createPrintHTML() {
+// Função para detectar tipo de dispositivo
+function detectDevice() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const userAgent = navigator.userAgent.toLowerCase();
+    
+    // Detectar tipo de dispositivo
+    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/i.test(userAgent);
+    
+    // Detectar tamanho da tela
+    let deviceType = 'desktop';
+    let printFormat = 'A4';
+    
+    if (width <= 480) {
+        deviceType = 'thermal'; // Impressora térmica ou tela muito pequena
+        printFormat = '80mm';
+    } else if (width <= 768 || isMobile) {
+        deviceType = 'mobile';
+        printFormat = 'A5';
+    } else if (width <= 1024 || isTablet) {
+        deviceType = 'tablet';
+        printFormat = 'A4-portrait';
+    } else {
+        deviceType = 'desktop';
+        printFormat = 'A4';
+    }
+    
+    return {
+        type: deviceType,
+        format: printFormat,
+        width: width,
+        height: height,
+        isMobile: isMobile,
+        isTablet: isTablet,
+        isTouch: 'ontouchstart' in window
+    };
+}
+
+// Função para ajustar conteúdo da impressão baseado no dispositivo
+function createAdaptivePrintHTML() {
+    const device = detectDevice();
+    
+    // Ajustar conteúdo baseado no dispositivo
+    let titleSize = device.type === 'thermal' ? 'COMANDA' : 'COMANDA DE PEDIDO';
+    let separator = device.type === 'thermal' ? '========================' : '================================';
+    let itemSeparator = device.type === 'thermal' ? '------------------------' : '--------------------------------';
+    
+    // Formatação de data/hora baseada no espaço disponível
+    let dateTime;
+    if (device.type === 'thermal') {
+        dateTime = `${currentOrder.timestamp.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit'
+        })} ${currentOrder.timestamp.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`;
+    } else {
+        dateTime = `${currentOrder.timestamp.toLocaleDateString('pt-BR')} ${currentOrder.timestamp.toLocaleTimeString('pt-BR')}`;
+    }
+    
+    // Truncar texto longo em dispositivos pequenos
+    const truncateText = (text, maxLength) => {
+        if (device.type === 'thermal' && text.length > maxLength) {
+            return text.substring(0, maxLength - 3) + '...';
+        }
+        return text;
+    };
+    
     return `
-        <div class="receipt">
+        <div class="receipt" data-device="${device.type}" data-format="${device.format}">
             <div class="receipt-header">
                 <h2>D'CASA & CIA ASSADOS</h2>
-                <p>COMANDA DE PEDIDO</p>
-                <p>================================</p>
+                <p>${titleSize}</p>
+                <p>${separator}</p>
             </div>
             
             <div class="receipt-info">
                 <p><strong>PEDIDO: #${currentOrder.id}</strong></p>
-                <p>${currentOrder.timestamp.toLocaleDateString('pt-BR')} ${currentOrder.timestamp.toLocaleTimeString('pt-BR')}</p>
-                <p>--------------------------------</p>
-                <p>CLIENTE: ${currentOrder.customer.name}</p>
+                <p>${dateTime}</p>
+                <p>${itemSeparator}</p>
+                <p>CLIENTE: ${truncateText(currentOrder.customer.name, 25)}</p>
                 <p>FONE: ${currentOrder.customer.phone}</p>
                 <p>PAGTO: ${currentOrder.payment.method.toUpperCase()}</p>
                 ${currentOrder.delivery.type === 'entrega' ? 
-                    `<p>ENDERECO: ${currentOrder.customer.address}</p>` : 
+                    `<p>ENDERECO: ${truncateText(currentOrder.customer.address, device.type === 'thermal' ? 30 : 50)}</p>` : 
                     '<p>RETIRADA NO LOCAL</p>'
                 }
-                ${currentOrder.notes ? `<p>OBS: ${currentOrder.notes}</p>` : ''}
-                <p>--------------------------------</p>
+                ${currentOrder.notes ? `<p>OBS: ${truncateText(currentOrder.notes, device.type === 'thermal' ? 25 : 40)}</p>` : ''}
+                <p>${itemSeparator}</p>
             </div>
             
             <div class="receipt-items">
                 <p><strong>ITENS DO PEDIDO:</strong></p>
-                ${currentOrder.items.map(item => `
-                    <div class="receipt-item">
-                        <span>${item.quantity}x ${item.name}</span>
-                        <span>R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
-                    </div>
-                `).join('')}
-                <p>--------------------------------</p>
+                ${currentOrder.items.map(item => {
+                    const itemName = truncateText(item.name, device.type === 'thermal' ? 15 : 25);
+                    return `
+                        <div class="receipt-item">
+                            <span>${item.quantity}x ${itemName}</span>
+                            <span>R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    `;
+                }).join('')}
+                <p>${itemSeparator}</p>
             </div>
             
             <div class="receipt-total">
@@ -970,21 +1060,24 @@ function createPrintHTML() {
                         <span>R$ ${currentOrder.pricing.deliveryFee.toFixed(2).replace('.', ',')}</span>
                     </div>
                 ` : ''}
-                <p>================================</p>
-                <div class="receipt-item" style="font-weight: bold; font-size: 14px;">
+                <p>${separator}</p>
+                <div class="receipt-item" style="font-weight: bold; font-size: ${device.type === 'thermal' ? '8px' : '14px'};">
                     <span>TOTAL:</span>
                     <span>R$ ${(currentOrder.pricing?.total || 0).toFixed(2).replace('.', ',')}</span>
                 </div>
-                <p>================================</p>
+                <p>${separator}</p>
             </div>
             
-            <div style="text-align: center; margin-top: 15px; font-size: 11px;">
+            <div style="text-align: center; margin-top: ${device.type === 'thermal' ? '10px' : '15px'};">
                 <p>Obrigado pela preferencia!</p>
                 <p>Volte sempre!</p>
+                ${device.type !== 'thermal' ? '<p>📱 WhatsApp: (11) 99999-9999</p>' : ''}
             </div>
         </div>
     `;
 }
+
+
 
 // Iniciar novo pedido
 function startNewOrder() {
@@ -2994,13 +3087,16 @@ function showToast(message) {
 
 // Função de teste de impressão
 function testPrint() {
+    // Mostrar informações do dispositivo
+    updateDeviceInfo();
+    
     const testOrder = {
         id: 'TESTE',
         timestamp: new Date(),
         customer: {
             name: 'Cliente Teste',
             phone: '(11) 99999-9999',
-            address: 'Endereço de teste, 123'
+            address: 'Endereço de teste, 123 - Bairro Central, CEP 12345-678'
         },
         delivery: {
             type: 'entrega'
@@ -3010,25 +3106,30 @@ function testPrint() {
         },
         items: [
             {
-                name: 'Costela Miga',
-                quantity: 1,
+                name: 'Costela Miga Especial com Temperos',
+                quantity: 2,
                 price: 90.00
             },
             {
-                name: 'Coca Cola 2L',
+                name: 'Coca Cola 2L Gelada',
                 quantity: 1,
                 price: 15.00
+            },
+            {
+                name: 'Frango Recheado Mandioca com Bacon',
+                quantity: 1,
+                price: 58.00
             }
         ],
         pricing: {
-            subtotal: 105.00,
-            discountValue: 0,
-            discountAmount: 0,
-            discountDisplay: '',
+            subtotal: 253.00,
+            discountValue: 10,
+            discountAmount: 25.30,
+            discountDisplay: '10%',
             deliveryFee: 9.00,
-            total: 114.00
+            total: 236.70
         },
-        notes: 'Pedido de teste para verificar impressão'
+        notes: 'Teste de impressão adaptativa - verificar formatação em diferentes dispositivos'
     };
     
     // Temporariamente definir como pedido atual
@@ -3041,7 +3142,62 @@ function testPrint() {
     // Restaurar pedido original
     currentOrder = originalOrder;
     
-    console.log('✅ Teste de impressão executado');
+    console.log('✅ Teste de impressão adaptativa executado');
 }
 
 // Imprimir pedido
+
+// Função para mostrar informações do dispositivo no dashboard
+function updateDeviceInfo() {
+    const device = detectDevice();
+    
+    // Criar ou atualizar elemento de informação do dispositivo
+    let deviceInfo = document.getElementById('device-info');
+    if (!deviceInfo) {
+        deviceInfo = document.createElement('div');
+        deviceInfo.id = 'device-info';
+        deviceInfo.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            z-index: 998;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        `;
+        document.body.appendChild(deviceInfo);
+    }
+    
+    // Definir ícone baseado no tipo de dispositivo
+    let icon = '🖥️';
+    switch(device.type) {
+        case 'thermal': icon = '🧾'; break;
+        case 'mobile': icon = '📱'; break;
+        case 'tablet': icon = '📱'; break;
+        case 'desktop': icon = '🖥️'; break;
+    }
+    
+    deviceInfo.innerHTML = `
+        ${icon} ${device.type.toUpperCase()}<br>
+        📄 ${device.format}<br>
+        📐 ${device.width}x${device.height}
+    `;
+    
+    // Esconder após 5 segundos
+    setTimeout(() => {
+        if (deviceInfo) {
+            deviceInfo.style.opacity = '0';
+            setTimeout(() => {
+                if (deviceInfo && deviceInfo.parentNode) {
+                    deviceInfo.parentNode.removeChild(deviceInfo);
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+
+// Função de teste de impressão melhorada
