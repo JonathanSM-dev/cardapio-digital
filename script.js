@@ -5472,4 +5472,115 @@ function closePromotionModal(modalContainer) {
     document.body.style.overflow = 'auto';
 }
 
+// ===== FUNÇÕES DE DEBUG PWA =====
+
+/**
+ * Função para debugar PWA - Execute no console
+ */
+function debugPWA() {
+    console.log('🔍 ===============================================');
+    console.log('🔍 DEBUG PWA - VERIFICANDO CRITÉRIOS DE INSTALAÇÃO');
+    console.log('🔍 ===============================================');
+    
+    // 1. Verificar protocolo
+    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    console.log(`📡 Protocolo: ${location.protocol} ${isSecure ? '✅' : '❌'}`);
+    if (!isSecure) {
+        console.log('❌ Use HTTPS, localhost ou 127.0.0.1');
+    }
+    
+    // 2. Verificar Service Worker
+    const hasServiceWorker = 'serviceWorker' in navigator;
+    console.log(`🔧 Service Worker suportado: ${hasServiceWorker ? '✅' : '❌'}`);
+    
+    if (hasServiceWorker) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            console.log(`🔧 Service Workers registrados: ${registrations.length}`);
+            registrations.forEach((reg, index) => {
+                console.log(`   SW ${index + 1}: ${reg.scope} - Estado: ${reg.active ? 'Ativo' : 'Inativo'}`);
+            });
+        });
+    }
+    
+    // 3. Verificar Manifest
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    console.log(`📋 Manifest linkado: ${manifestLink ? '✅' : '❌'}`);
+    if (manifestLink) {
+        console.log(`📋 Manifest URL: ${manifestLink.href}`);
+        
+        // Tentar buscar o manifest
+        fetch(manifestLink.href)
+            .then(response => response.json())
+            .then(manifest => {
+                console.log('📋 Manifest carregado com sucesso:');
+                console.log(`   Nome: ${manifest.name}`);
+                console.log(`   Start URL: ${manifest.start_url}`);
+                console.log(`   Display: ${manifest.display}`);
+                console.log(`   Ícones: ${manifest.icons ? manifest.icons.length : 0}`);
+                
+                // Verificar ícones
+                if (manifest.icons && manifest.icons.length > 0) {
+                    const validIcons = manifest.icons.filter(icon => {
+                        const sizes = icon.sizes.split('x');
+                        return parseInt(sizes[0]) >= 144 && parseInt(sizes[1]) >= 144;
+                    });
+                    console.log(`   Ícones válidos (≥144px): ${validIcons.length} ${validIcons.length > 0 ? '✅' : '❌'}`);
+                } else {
+                    console.log('   ❌ Nenhum ícone encontrado');
+                }
+            })
+            .catch(error => {
+                console.log('❌ Erro ao carregar manifest:', error);
+            });
+    }
+    
+    // 4. Verificar beforeinstallprompt
+    console.log('🎯 Verificando evento beforeinstallprompt...');
+    
+    let installPromptReceived = false;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        installPromptReceived = true;
+        console.log('🎯 beforeinstallprompt recebido! ✅');
+        console.log('🎯 PWA pode ser instalado');
+    });
+    
+    // Aguardar um pouco para ver se o evento é disparado
+    setTimeout(() => {
+        if (!installPromptReceived) {
+            console.log('🎯 beforeinstallprompt NÃO recebido ❌');
+            console.log('🎯 Possíveis motivos:');
+            console.log('   • PWA já está instalado');
+            console.log('   • Critérios não atendidos');
+            console.log('   • Navegador não suporta (use Chrome/Edge)');
+        }
+    }, 2000);
+    
+    // 5. Verificar se já está instalado
+    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('📱 PWA já está instalado e rodando em modo standalone ✅');
+    } else {
+        console.log('📱 PWA não está instalado ou rodando no navegador');
+    }
+    
+    console.log('🔍 ===============================================');
+    console.log('🔍 DEBUG COMPLETO - Verifique os resultados acima');
+    console.log('🔍 ===============================================');
+}
+
+/**
+ * Função para forçar instalação PWA - Execute no console
+ */
+function forcarInstalacaoPWA() {
+    if (window.deferredPrompt) {
+        window.deferredPrompt.prompt();
+        window.deferredPrompt.userChoice.then((choiceResult) => {
+            console.log(`Usuário ${choiceResult.outcome === 'accepted' ? 'aceitou' : 'recusou'} a instalação`);
+            window.deferredPrompt = null;
+        });
+    } else {
+        console.log('❌ Prompt de instalação não disponível');
+        console.log('Execute debugPWA() para verificar os critérios');
+    }
+}
+
 // Função de teste de impressão melhorada
