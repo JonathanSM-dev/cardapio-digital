@@ -8,13 +8,13 @@ const DATA_CACHE_NAME = 'dcasa-data-v2.0.0';
 
 // Arquivos essenciais para funcionamento offline
 const FILES_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/script.js',
-  '/indexedDB.js',
-  '/backup.js',
-  '/manifest.json',
+  './',
+  './index.html',
+  './style.css',
+  './script.js',
+  './indexedDB.js',
+  './backup.js',
+  './manifest.json',
   // CDN resources (cached separately)
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/chart.js'
