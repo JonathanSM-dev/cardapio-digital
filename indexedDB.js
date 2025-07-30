@@ -105,6 +105,158 @@ class RestaurantDB {
     }
 
     /**
+     * Salva uma configuração no banco
+     */
+    async saveSetting(key, value) {
+        if (!this.isReady) {
+            console.warn('⚠️ IndexedDB não está pronto. Usando localStorage como fallback.');
+            localStorage.setItem(`dcasa_${key}`, JSON.stringify(value));
+            return;
+        }
+
+        try {
+            const transaction = this.db.transaction(['settings'], 'readwrite');
+            const store = transaction.objectStore('settings');
+            
+            const setting = {
+                key: key,
+                value: value,
+                timestamp: new Date().toISOString()
+            };
+            
+            await store.put(setting);
+            console.log(`⚙️ Configuração "${key}" salva no IndexedDB`);
+        } catch (error) {
+            console.error(`❌ Erro ao salvar configuração "${key}":`, error);
+            // Fallback para localStorage
+            localStorage.setItem(`dcasa_${key}`, JSON.stringify(value));
+        }
+    }
+
+    /**
+     * Carrega uma configuração do banco
+     */
+    async getSetting(key, defaultValue = null) {
+        if (!this.isReady) {
+            console.warn('⚠️ IndexedDB não está pronto. Usando localStorage como fallback.');
+            const stored = localStorage.getItem(`dcasa_${key}`);
+            return stored ? JSON.parse(stored) : defaultValue;
+        }
+
+        try {
+            const transaction = this.db.transaction(['settings'], 'readonly');
+            const store = transaction.objectStore('settings');
+            
+            return new Promise((resolve) => {
+                const request = store.get(key);
+                
+                request.onsuccess = () => {
+                    const result = request.result;
+                    if (result) {
+                        resolve(result.value);
+                    } else {
+                        // Tentar fallback do localStorage
+                        const stored = localStorage.getItem(`dcasa_${key}`);
+                        resolve(stored ? JSON.parse(stored) : defaultValue);
+                    }
+                };
+                
+                request.onerror = () => {
+                    console.error(`❌ Erro ao carregar configuração "${key}":`, request.error);
+                    // Fallback para localStorage
+                    const stored = localStorage.getItem(`dcasa_${key}`);
+                    resolve(stored ? JSON.parse(stored) : defaultValue);
+                };
+            });
+        } catch (error) {
+            console.error(`❌ Erro ao acessar configuração "${key}":`, error);
+            // Fallback para localStorage
+            const stored = localStorage.getItem(`dcasa_${key}`);
+            return stored ? JSON.parse(stored) : defaultValue;
+        }
+    }
+
+    /**
+     * Salva configurações do restaurante
+     */
+    async saveRestaurantSettings(settings) {
+        await this.saveSetting('restaurant', settings);
+    }
+
+    /**
+     * Carrega configurações do restaurante
+     */
+    async getRestaurantSettings() {
+        return await this.getSetting('restaurant', {
+            name: "D'Casa & Cia Assados",
+            phone: "(11) 99999-9999",
+            address: "Rua Exemplo, 123 - Centro - São Paulo - SP",
+            defaultDeliveryFee: 9.00
+        });
+    }
+
+    /**
+     * Salva dados dos produtos (incluindo promoções)
+     */
+    async saveProducts(products) {
+        if (!this.isReady) {
+            console.warn('⚠️ IndexedDB não está pronto. Produtos não foram salvos.');
+            return;
+        }
+
+        try {
+            const transaction = this.db.transaction(['products'], 'readwrite');
+            const store = transaction.objectStore('products');
+            
+            // Limpar produtos existentes
+            await store.clear();
+            
+            // Salvar todos os produtos
+            for (const product of products) {
+                await store.put({
+                    ...product,
+                    lastUpdated: new Date().toISOString()
+                });
+            }
+            
+            console.log(`🍽️ ${products.length} produtos salvos no IndexedDB`);
+        } catch (error) {
+            console.error('❌ Erro ao salvar produtos:', error);
+        }
+    }
+
+    /**
+     * Carrega dados dos produtos
+     */
+    async getProducts() {
+        if (!this.isReady) {
+            console.warn('⚠️ IndexedDB não está pronto.');
+            return [];
+        }
+
+        try {
+            const transaction = this.db.transaction(['products'], 'readonly');
+            const store = transaction.objectStore('products');
+            
+            return new Promise((resolve) => {
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    resolve(request.result || []);
+                };
+                
+                request.onerror = () => {
+                    console.error('❌ Erro ao carregar produtos:', request.error);
+                    resolve([]);
+                };
+            });
+        } catch (error) {
+            console.error('❌ Erro ao acessar produtos:', error);
+            return [];
+        }
+    }
+
+    /**
      * Verifica se o IndexedDB está disponível
      */
     static isSupported() {
@@ -469,6 +621,176 @@ class RestaurantDB {
             };
         }
         return null;
+    }
+
+    /**
+     * Remove um pedido específico
+     */
+    async deleteOrder(orderId) {
+        await this.waitReady();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['orders'], 'readwrite');
+            const store = transaction.objectStore('orders');
+            
+            // Primeiro buscar o pedido pelo ID
+            const getRequest = store.get(orderId);
+            
+            getRequest.onsuccess = () => {
+                if (getRequest.result) {
+                    // Pedido encontrado, deletar
+                    const deleteRequest = store.delete(orderId);
+                    
+                    deleteRequest.onsuccess = () => {
+                        console.log('🗑️ Pedido deletado do IndexedDB:', orderId);
+                        resolve(true);
+                    };
+                    
+                    deleteRequest.onerror = () => {
+                        console.error('❌ Erro ao deletar pedido:', deleteRequest.error);
+                        reject(deleteRequest.error);
+                    };
+                } else {
+                    console.warn('⚠️ Pedido não encontrado para deleção:', orderId);
+                    resolve(false);
+                }
+            };
+            
+            getRequest.onerror = () => {
+                console.error('❌ Erro ao buscar pedido para deleção:', getRequest.error);
+                reject(getRequest.error);
+            };
+        });
+    }
+
+    // ==================== OPERAÇÕES DE PRODUTOS ====================
+
+    /**
+     * Salva produtos no IndexedDB
+     */
+    async saveProducts(products) {
+        await this.waitReady();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['products'], 'readwrite');
+            const store = transaction.objectStore('products');
+            
+            // Limpar produtos existentes primeiro
+            const clearRequest = store.clear();
+            
+            clearRequest.onsuccess = () => {
+                // Adicionar novos produtos
+                let completed = 0;
+                const total = products.length;
+                
+                if (total === 0) {
+                    resolve();
+                    return;
+                }
+                
+                products.forEach(product => {
+                    const addRequest = store.add({
+                        ...product,
+                        timestamp: new Date()
+                    });
+                    
+                    addRequest.onsuccess = () => {
+                        completed++;
+                        if (completed === total) {
+                            console.log('🍽️ Produtos salvos no IndexedDB:', total);
+                            resolve();
+                        }
+                    };
+                    
+                    addRequest.onerror = () => {
+                        console.error('❌ Erro ao salvar produto:', addRequest.error);
+                        reject(addRequest.error);
+                    };
+                });
+            };
+            
+            clearRequest.onerror = () => {
+                console.error('❌ Erro ao limpar produtos:', clearRequest.error);
+                reject(clearRequest.error);
+            };
+        });
+    }
+
+    /**
+     * Carrega produtos do IndexedDB
+     */
+    async loadProducts() {
+        await this.waitReady();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['products'], 'readonly');
+            const store = transaction.objectStore('products');
+            const request = store.getAll();
+            
+            request.onsuccess = () => {
+                const products = request.result || [];
+                console.log('🍽️ Produtos carregados do IndexedDB:', products.length);
+                resolve(products);
+            };
+            
+            request.onerror = () => {
+                console.error('❌ Erro ao carregar produtos:', request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Salva um produto específico
+     */
+    async saveProduct(product) {
+        await this.waitReady();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['products'], 'readwrite');
+            const store = transaction.objectStore('products');
+            
+            const productWithTimestamp = {
+                ...product,
+                timestamp: new Date()
+            };
+            
+            const request = store.put(productWithTimestamp);
+            
+            request.onsuccess = () => {
+                console.log('🍽️ Produto salvo no IndexedDB:', product.id);
+                resolve(request.result);
+            };
+            
+            request.onerror = () => {
+                console.error('❌ Erro ao salvar produto:', request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Remove um produto específico
+     */
+    async deleteProduct(productId) {
+        await this.waitReady();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['products'], 'readwrite');
+            const store = transaction.objectStore('products');
+            
+            const request = store.delete(productId);
+            
+            request.onsuccess = () => {
+                console.log('🗑️ Produto deletado do IndexedDB:', productId);
+                resolve(true);
+            };
+            
+            request.onerror = () => {
+                console.error('❌ Erro ao deletar produto:', request.error);
+                reject(request.error);
+            };
+        });
     }
 
     /**

@@ -207,6 +207,15 @@ class ThermalPrinter {
             return this.fallbackPrint(orderData);
         }
 
+        // Verificar se é impressora PDF
+        const isPDFPrinter = this.printerName.toLowerCase().includes('pdf') || 
+                            this.printerName.toLowerCase().includes('microsoft print to pdf');
+
+        if (isPDFPrinter) {
+            console.log('📄 Detectada impressora PDF, usando método alternativo...');
+            return this.printToPDF(orderData);
+        }
+
         try {
             console.log('🖨️ Imprimindo via QZ Tray...');
 
@@ -227,7 +236,13 @@ class ThermalPrinter {
                 data: escCommands
             }];
 
-            await qz.print(config, data);
+            // Adicionar timeout para evitar travamento
+            const printPromise = qz.print(config, data);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout na impressão')), 10000)
+            );
+            
+            await Promise.race([printPromise, timeoutPromise]);
             console.log('✅ Impressão térmica concluída!');
             
             this.showPrintSuccess();
@@ -275,7 +290,7 @@ class ThermalPrinter {
         // Dados do cliente - com quebra de linha inteligente
         commands += this.formatLineWithBreak('CLIENTE:', order.customer.name);
         commands += this.formatLineWithBreak('FONE:', order.customer.phone);
-        commands += `PAGTO: ${order.payment.method.toUpperCase()}\n`;
+        commands += `PAGTO: ${this.formatPaymentMethod(order.payment.method)}\n`;
         
         if (order.delivery.type === 'entrega') {
             commands += this.formatLineWithBreak('ENDERECO:', order.customer.address);
@@ -342,6 +357,30 @@ class ThermalPrinter {
         commands += GS + 'V' + '\x41' + '\x03'; // Corte parcial
         
         return commands;
+    }
+
+    // Função para formatar método de pagamento
+    formatPaymentMethod(method) {
+        if (!method || method === 'nao-informado') {
+            return 'NÃO INFORMADO';
+        }
+        return method.toUpperCase();
+    }
+
+    // Método alternativo para impressoras PDF
+    async printToPDF(orderData) {
+        try {
+            console.log('📄 Gerando PDF para impressão...');
+            
+            // Usar o método de impressão padrão do navegador que funciona melhor com PDF
+            this.fallbackPrint(orderData);
+            
+            this.showPrintSuccess();
+            
+        } catch (error) {
+            console.error('❌ Erro ao imprimir PDF:', error);
+            this.showPrintError('Erro ao gerar PDF: ' + error.message);
+        }
     }
 
     // Nova função para quebra de linha inteligente

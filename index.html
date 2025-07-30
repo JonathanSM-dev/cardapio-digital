@@ -71,6 +71,11 @@
         <span id="floating-cart-text">Carrinho Vazio</span>
     </button>
 
+    <!-- Floating Calculator Button -->
+    <button id="floating-calculator" class="floating-calculator" title="Calculadora">
+        <i class="fas fa-calculator"></i>
+    </button>
+
     <!-- Navigation Tabs -->
     <nav class="main-nav">
         <div class="container">
@@ -82,7 +87,10 @@
                     <i class="fas fa-plus-circle"></i> Novo Pedido
                 </button>
                 <button class="nav-tab" data-tab="more">
-                    <i class="fas fa-ellipsis-h"></i> Mais
+                    <i class="fas fa-clipboard-list"></i> Gerenciamento
+                </button>
+                <button class="nav-tab" data-tab="settings">
+                    <i class="fas fa-cog"></i> Configurações
                 </button>
             </div>
         </div>
@@ -95,26 +103,26 @@
             <section class="tab-content active" id="dashboard-tab">
                 <div class="dashboard-section">
                     <div class="dashboard-header">
-                        <h2>📊 Visão Geral - Hoje</h2>
+                        <h2><i class="fas fa-chart-line"></i> Visão Geral - Hoje</h2>
                         <div class="quick-stats">
                             <div class="stat-card">
-                                <div class="stat-icon">💰</div>
+                                <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
                                 <div class="stat-content">
-                                    <span class="stat-value" id="today-revenue">R$ 0,00</span>
+                                    <span class="stat-value" id="today-revenue" style="font-size: 1.8rem;">R$ 0,00</span>
                                     <span class="stat-label">Faturamento Hoje</span>
                                 </div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-icon">📦</div>
+                                <div class="stat-icon"><i class="fas fa-box"></i></div>
                                 <div class="stat-content">
-                                    <span class="stat-value" id="today-orders">0</span>
+                                    <span class="stat-value" id="today-orders" style="font-size: 1.8rem;">0</span>
                                     <span class="stat-label">Pedidos Hoje</span>
                                 </div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-icon">⭐</div>
+                                <div class="stat-icon"><i class="fas fa-calculator"></i></div>
                                 <div class="stat-content">
-                                    <span class="stat-value" id="today-avg">R$ 0,00</span>
+                                    <span class="stat-value" id="today-avg" style="font-size: 1.8rem;">R$ 0,00</span>
                                     <span class="stat-label">Ticket Médio</span>
                                 </div>
                             </div>
@@ -123,7 +131,7 @@
 
                     <!-- Quick Actions -->
                     <div class="quick-actions">
-                        <h3>🚀 Ações Rápidas</h3>
+                        <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
                         <div class="action-buttons">
                             <button class="action-btn primary" onclick="switchTab('menu')">
                                 <i class="fas fa-plus-circle"></i>
@@ -137,20 +145,12 @@
                                 <i class="fas fa-chart-line"></i>
                                 <span>Relatório Rápido</span>
                             </button>
-                            <button class="action-btn secondary" onclick="testPrint()">
-                                <i class="fas fa-print"></i>
-                                <span>Teste de Impressão</span>
-                            </button>
-                            <button class="action-btn secondary" onclick="window.thermalPrinter?.selectPrinter()">
-                                <i class="fas fa-cog"></i>
-                                <span>Configurar Impressora</span>
-                            </button>
                         </div>
                     </div>
 
                     <!-- Today's Orders Preview -->
                     <div class="today-preview">
-                        <h3>📋 Últimos Pedidos</h3>
+                        <h3><i class="fas fa-receipt"></i> Últimos Pedidos</h3>
                         <div id="today-orders-preview" class="orders-preview">
                             <!-- Será preenchido dinamicamente -->
                         </div>
@@ -162,6 +162,15 @@
             <section class="tab-content" id="menu-tab">
                 <div class="menu-section">
                     <h2>Nosso Cardápio</h2>
+                    
+                    <!-- Search Bar -->
+                    <div class="menu-search">
+                        <div class="search-box">
+                            <input type="text" id="menu-search" placeholder="Pesquisar produtos..." class="search-input">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                    </div>
+                    
                     <div class="menu-categories">
                         <button class="category-btn active" data-category="all">Todos</button>
                         <button class="category-btn" data-category="pratos">Pratos Principais</button>
@@ -289,13 +298,171 @@
         </div>
     </main>
 
-            <!-- Cart Section -->
-            <section class="cart-section" id="cart-section" style="display: none;">
+                <!-- Service Type Selection Modal -->
+    <section class="service-type-modal" id="service-type-modal" style="display: none;">
+        <div class="modal-overlay" id="service-type-overlay"></div>
+        <div class="modal-content service-type-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-hand-paper"></i> Tipo de Atendimento</h2>
+                <button id="close-service-type" class="close-btn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <p class="service-type-description">Como você gostaria de receber seu pedido?</p>
+                
+                <div class="service-type-options">
+                    <div class="service-type-option" data-type="entrega">
+                        <div class="service-type-icon">
+                            <i class="fas fa-motorcycle"></i>
+                        </div>
+                        <div class="service-type-info">
+                            <h3>Entrega</h3>
+                            <p>Receba em casa com taxa de entrega</p>
+                            <span class="service-type-fee">Taxa: R$ 9,00</span>
+                        </div>
+                        <div class="service-type-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="service-type-option" data-type="retirada">
+                        <div class="service-type-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="service-type-info">
+                            <h3>Retirada</h3>
+                            <p>Retire no local sem taxa adicional</p>
+                            <span class="service-type-fee">Sem taxa</span>
+                        </div>
+                        <div class="service-type-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer service-modal-footer">
+                    <button id="cancel-service-selection" class="cancel-order-btn">
+                        <i class="fas fa-times"></i> Cancelar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Management Modal -->
+    <section class="product-modal" id="product-modal" style="display: none;">
+        <div class="modal-overlay" id="product-modal-overlay"></div>
+        <div class="modal-content product-modal-content modern-modal">
+            <div class="modal-header modern-header">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="header-text">
+                        <h2 id="product-modal-title">Adicionar Produto</h2>
+                        <p class="header-subtitle">Preencha as informações do produto</p>
+                    </div>
+                </div>
+                <button id="close-product-modal" class="close-btn modern-close">&times;</button>
+            </div>
+            
+            <div class="modal-body modern-body">
+                <form id="product-form" class="product-form modern-form">
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Informações Básicas</span>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-group modern-input">
+                                <label for="product-name">Nome do Produto *</label>
+                                <input type="text" id="product-name" name="name" required placeholder="Ex: Frango Assado">
+                            </div>
+                            
+                            <div class="form-group modern-input">
+                                <label for="product-category">Categoria *</label>
+                                <select id="product-category" name="category" required>
+                                    <option value="">Selecione uma categoria...</option>
+                                    <option value="pratos">🍽️ Prato Principal</option>
+                                    <option value="acompanhamentos">🥗 Acompanhamento</option>
+                                    <option value="bebidas">🥤 Bebida</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group modern-textarea">
+                            <label for="product-description">Descrição</label>
+                            <textarea id="product-description" name="description" rows="3" placeholder="Descreva o produto de forma atrativa..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>Preço e Estoque</span>
+                        </div>
+                        
+                        <div class="form-grid three-cols">
+                            <div class="form-group modern-input">
+                                <label for="product-price">Preço (R$) *</label>
+                                <input type="number" id="product-price" name="price" step="0.01" min="0" required placeholder="0,00">
+                            </div>
+                            
+                            <div class="form-group modern-input">
+                                <label for="product-stock">Quantidade Disponível</label>
+                                <input type="number" id="product-stock" name="stock" min="0" value="999" placeholder="999">
+                            </div>
+                            
+                            <div class="form-group modern-input">
+                                <label for="product-min-stock">Estoque Mínimo</label>
+                                <input type="number" id="product-min-stock" name="minStock" min="0" value="5" placeholder="5">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-cog"></i>
+                            <span>Configurações</span>
+                        </div>
+                        
+                        <div class="modern-toggle">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="product-active" name="active" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">Produto Ativo</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions modern-actions">
+                        <button type="button" id="cancel-product" class="btn-modern secondary">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                        <button type="submit" id="save-product" class="btn-modern primary">
+                            <i class="fas fa-save"></i>
+                            Salvar Produto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Section -->
+    <section class="cart-section" id="cart-section" style="display: none;">
                 <div class="modal-overlay" id="cart-overlay"></div>
                 <div class="cart-content">
                     <div class="cart-header">
                         <h2><i class="fas fa-shopping-cart"></i> Seu Pedido</h2>
-                        <button id="close-cart" class="close-btn">&times;</button>
+                        <div class="cart-header-actions">
+                            <button id="cancel-cart-order" class="cancel-cart-btn" title="Cancelar Pedido">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button id="close-cart" class="close-btn">&times;</button>
+                        </div>
                     </div>
                     <div class="cart-items" id="cart-items">
                         <!-- Cart items will be loaded by JavaScript -->
@@ -304,7 +471,12 @@
                         <div class="cart-total">
                             <strong>Total: R$ <span id="final-total">0,00</span></strong>
                         </div>
-                        <button id="checkout-btn" class="checkout-btn">Finalizar Pedido</button>
+                        <div class="cart-actions">
+                            <button id="cancel-order-btn" class="cancel-order-btn">
+                                <i class="fas fa-times"></i> Cancelar Pedido
+                            </button>
+                            <button id="checkout-btn" class="checkout-btn">Finalizar Pedido</button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -312,90 +484,122 @@
             <!-- Checkout Form -->
             <section class="checkout-section" id="checkout-section" style="display: none;">
                 <div class="modal-overlay" id="checkout-overlay"></div>
-                <div class="checkout-content">
-                    <div class="checkout-header">
-                        <h2><i class="fas fa-clipboard-list"></i> Dados do Pedido</h2>
-                        <button id="back-to-cart" class="back-btn">
-                            <i class="fas fa-arrow-left"></i> Voltar ao Carrinho
+                <div class="checkout-content modern-checkout">
+                    <div class="checkout-header modern-checkout-header">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="header-text">
+                                <h2>Finalizar Pedido</h2>
+                                <p class="header-subtitle">Preencha os dados para confirmar</p>
+                            </div>
+                        </div>
+                        <button id="back-to-cart" class="back-btn modern-back">
+                            <i class="fas fa-arrow-left"></i>
                         </button>
                     </div>
-                    <form id="checkout-form" class="checkout-form">
-                    <div class="form-group">
-                        <label for="customer-name">Nome Completo *</label>
-                        <input type="text" id="customer-name" name="customerName" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customer-phone">Celular (WhatsApp) *</label>
-                        <input type="tel" id="customer-phone" name="customerPhone" placeholder="(11) 99999-9999" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="delivery-address">Endereço de Entrega *</label>
-                        <textarea id="delivery-address" name="deliveryAddress" rows="3" placeholder="Rua, número, bairro, CEP, complemento..." required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="delivery-type">Tipo de Atendimento *</label>
-                        <select id="delivery-type" name="deliveryType" required>
-                            <option value="entrega">Entrega</option>
-                            <option value="retirada">Retirada</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group" id="delivery-fee-group">
-                        <label for="delivery-fee">Taxa de Entrega</label>
-                        <input type="number" id="delivery-fee" name="deliveryFee" step="0.01" min="0" value="9.00">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="payment-method">Forma de Pagamento *</label>
-                        <select id="payment-method" name="paymentMethod" required>
-                            <option value="">Selecione...</option>
-                            <option value="dinheiro">Dinheiro</option>
-                            <option value="cartao">Cartão</option>
-                            <option value="pix">PIX</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="discount-value">Desconto</label>
-                        <div class="discount-container">
-                            <select id="discount-type" name="discountType">
-                                <option value="percent">%</option>
-                                <option value="fixed">R$</option>
-                            </select>
-                            <input type="number" id="discount-value" name="discountValue" step="0.01" min="0" value="0" placeholder="0">
+                                        <form id="checkout-form" class="checkout-form modern-checkout-form">
+                        <div class="compact-form-container">
+                            <div class="form-grid compact-grid">
+                                <div class="form-group modern-input">
+                                    <label for="customer-name">Nome Completo *</label>
+                                    <input type="text" id="customer-name" name="customerName" required placeholder="Digite o nome completo">
+                                </div>
+                                
+                                <div class="form-group modern-input">
+                                    <label for="customer-phone">Celular (WhatsApp) *</label>
+                                    <input type="tel" id="customer-phone" name="customerPhone" placeholder="(11) 99999-9999" required>
+                                </div>
+                                
+                                <div class="form-group modern-select">
+                                    <label for="delivery-type">Tipo de Atendimento *</label>
+                                    <select id="delivery-type" name="deliveryType" required>
+                                        <option value="entrega">Entrega</option>
+                                        <option value="retirada">Retirada no Local</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group modern-select">
+                                    <label for="payment-method">Forma de Pagamento</label>
+                                    <select id="payment-method" name="paymentMethod">
+                                        <option value="nao-informado">Não Informado</option>
+                                        <option value="dinheiro">Dinheiro</option>
+                                        <option value="cartao">Cartão</option>
+                                        <option value="pix">PIX</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row secondary-fields">
+                                <div class="form-group modern-input" id="delivery-fee-group">
+                                    <label for="delivery-fee">Taxa de Entrega (R$)</label>
+                                    <input type="number" id="delivery-fee" name="deliveryFee" step="0.01" min="0" value="9.00">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="discount-value">Desconto</label>
+                                    <div class="discount-container">
+                                        <select id="discount-type" name="discountType">
+                                            <option value="percent">%</option>
+                                            <option value="fixed">R$</option>
+                                        </select>
+                                        <input type="number" id="discount-value" name="discountValue" step="1" min="0" value="0" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group modern-textarea full-width">
+                                <label for="delivery-address">Endereço de Entrega *</label>
+                                <textarea id="delivery-address" name="deliveryAddress" rows="2" placeholder="Rua, número, bairro, CEP, complemento..." required></textarea>
+                            </div>
+                            
+                            <div class="form-group change-group" id="change-group" style="display: none;">
+                                <div class="change-checkbox">
+                                    <input type="checkbox" id="needs-change" name="needsChange" style="width: 10%;">
+                                    <label for="needs-change">Cliente precisa de troco</label>
+                                </div>
+                                <div class="change-amount" id="change-amount" style="display: none;">
+                                    <label for="change-for">Troco para quanto?</label>
+                                    <input type="number" id="change-for" name="changeFor" step="0.01" min="0" placeholder="Ex: 50.00">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group modern-textarea full-width">
+                                <label for="order-notes">Observações</label>
+                                <textarea id="order-notes" name="orderNotes" rows="2" placeholder="Alguma observação especial..."></textarea>
+                            </div>
+                            
+                            <div class="modern-order-summary">
+                                <div class="summary-row">
+                                    <span>Subtotal:</span>
+                                    <span>R$ <span id="subtotal">0,00</span></span>
+                                </div>
+                                <div class="summary-row" id="discount-row" style="display: none;">
+                                    <span>Desconto (<span id="discount-percent-display">0</span>):</span>
+                                    <span class="discount-value">- R$ <span id="discount-amount">0,00</span></span>
+                                </div>
+                                <div class="summary-row" id="delivery-fee-row">
+                                    <span>Taxa de Entrega:</span>
+                                    <span>R$ <span id="delivery-fee-display">5,00</span></span>
+                                </div>
+                                <div class="summary-row total-row">
+                                    <span>Total Final:</span>
+                                    <span class="total-value">R$ <span id="order-total">5,00</span></span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="order-notes">Observações</label>
-                        <textarea id="order-notes" name="orderNotes" rows="2" placeholder="Alguma observação especial..."></textarea>
-                    </div>
-                    
-                    <div class="order-summary">
-                        <div class="summary-row">
-                            <span>Subtotal:</span>
-                            <span>R$ <span id="subtotal">0,00</span></span>
+                        
+                        <div class="checkout-actions modern-checkout-actions">
+                            <button type="button" id="cancel-checkout-btn" class="btn-modern secondary">
+                                <i class="fas fa-times"></i>
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn-modern primary">
+                                <i class="fas fa-check"></i>
+                                Confirmar Pedido
+                            </button>
                         </div>
-                        <div class="summary-row" id="discount-row" style="display: none;">
-                            <span>Desconto (<span id="discount-percent-display">0</span>):</span>
-                            <span style="color: #dc3545;">- R$ <span id="discount-amount">0,00</span></span>
-                        </div>
-                        <div class="summary-row" id="delivery-fee-row">
-                            <span>Taxa de Entrega:</span>
-                            <span>R$ <span id="delivery-fee-display">5,00</span></span>
-                        </div>
-                        <div class="summary-row total-row">
-                            <span>Total Final:</span>
-                            <span>R$ <span id="order-total">5,00</span></span>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="confirm-order-btn">
-                        <i class="fas fa-check"></i> Confirmar Pedido
-                    </button>
                     </form>
                 </div>
             </section>
@@ -434,7 +638,7 @@
             <!-- More Tab Content (Agrupa Histórico, Relatórios e Backup) -->
             <section class="tab-content" id="more-tab" style="display: none;">
                 <div class="more-section">
-                    <h2>⚙️ Mais Opções</h2>
+                    <h2><i class="fas fa-tasks"></i> Gerenciamento</h2>
                     
                     <!-- Sub-navigation for More section -->
                     <div class="sub-nav">
@@ -444,25 +648,56 @@
                         <button class="sub-nav-btn" data-section="analytics">
                             <i class="fas fa-chart-bar"></i> Relatórios
                         </button>
-                        <button class="sub-nav-btn" data-section="backup">
-                            <i class="fas fa-shield-alt"></i> Backup
+                        <button class="sub-nav-btn" data-section="products">
+                            <i class="fas fa-utensils"></i> Produtos
+                        </button>
+                        <button class="sub-nav-btn" data-section="clients">
+                            <i class="fas fa-users"></i> Clientes
                         </button>
                     </div>
 
                     <!-- History Sub-section -->
                     <div class="sub-section active" id="history-subsection">
-                        <div class="order-history" id="order-history">
-                            <div class="history-header">
-                                <h3><i class="fas fa-history"></i> Histórico de Pedidos - Hoje</h3>
-                                <div class="history-stats">
-                                    <span class="stat">Total de Pedidos: <strong id="total-orders">0</strong></span>
-                                    <span class="stat">Faturamento: <strong>R$ <span id="total-revenue">0,00</span></strong></span>
+                                            <div class="order-history" id="order-history">
+                        <div class="history-header">
+                            <h3><i class="fas fa-history"></i> Histórico de Pedidos</h3>
+                            <div class="history-controls">
+                                <div class="search-filter-container">
+                                    <div class="search-box">
+                                        <input type="text" id="history-search" placeholder="Buscar por cliente, telefone ou ID..." class="search-input">
+                                        <i class="fas fa-search search-icon"></i>
+                                    </div>
+                                    <div class="filter-controls">
+                                        <select id="history-period-filter" class="filter-select">
+                                            <option value="today">Hoje</option>
+                                            <option value="week">Esta Semana</option>
+                                            <option value="month">Este Mês</option>
+                                            <option value="all">Todos</option>
+                                        </select>
+                                        <select id="history-delivery-filter" class="filter-select">
+                                            <option value="all">Todos os Tipos</option>
+                                            <option value="entrega">Entrega</option>
+                                            <option value="retirada">Retirada</option>
+                                        </select>
+                                        <select id="history-payment-filter" class="filter-select">
+                                            <option value="all">Todos os Pagamentos</option>
+                                            <option value="dinheiro">Dinheiro</option>
+                                            <option value="cartao">Cartão</option>
+                                            <option value="pix">PIX</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="history-list" id="history-list">
-                                <!-- Order history will be loaded by JavaScript -->
+                            <div class="history-stats">
+                                <span class="stat">Total de Pedidos: <strong id="total-orders">0</strong></span>
+                                <span class="stat">Faturamento: <strong>R$ <span id="total-revenue">0,00</span></strong></span>
+                                <span class="stat">Filtrados: <strong id="filtered-orders">0</strong></span>
                             </div>
                         </div>
+                        <div class="history-list" id="history-list">
+                            <!-- Order history will be loaded by JavaScript -->
+                        </div>
+                    </div>
                     </div>
 
                     <!-- Analytics Sub-section -->
@@ -547,13 +782,94 @@
                                         <h4>Vendas por Horário (Top Produtos)</h4>
                                         <canvas id="productTimeChart"></canvas>
                                     </div>
+                                    
+
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Products Sub-section -->
+                    <div class="sub-section" id="products-subsection">
+                        <div class="products-section" id="products-section">
+                            <div class="products-header">
+                                <h3><i class="fas fa-utensils"></i> Gerenciar Produtos</h3>
+                                <button class="action-btn primary" id="add-product-btn">
+                                    <i class="fas fa-plus"></i> Adicionar Produto
+                                </button>
+                            </div>
+                            
+                            <div class="products-filters">
+                                <div class="filter-group">
+                                    <label for="product-category-filter">Categoria:</label>
+                                    <select id="product-category-filter" class="filter-select">
+                                        <option value="all">Todas as Categorias</option>
+                                        <option value="pratos">Prato Principal</option>
+                                        <option value="acompanhamentos">Acompanhamento</option>
+                                        <option value="bebidas">Bebida</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="products-stats">
+                                    <span class="stat">Total: <strong id="total-products">0</strong></span>
+                                    <span class="stat">Ativos: <strong id="active-products">0</strong></span>
+                                </div>
+                            </div>
+                            
+                            <div class="products-grid" id="products-grid">
+                                <!-- Products will be loaded by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clients Sub-section -->
+                    <div class="sub-section" id="clients-subsection">
+                        <div class="clients-section" id="clients-section">
+                            <div class="clients-header">
+                                <h3><i class="fas fa-users"></i> Gerenciar Clientes</h3>
+                            </div>
+                            
+                            <div class="construction-notice">
+                                <div class="construction-icon">🚧</div>
+                                <h4>Em Construção</h4>
+                                <p>Esta funcionalidade está sendo desenvolvida e estará disponível em breve.</p>
+                                <div class="construction-features">
+                                    <h5>Funcionalidades Planejadas:</h5>
+                                    <ul>
+                                        <li>📝 Cadastro de clientes</li>
+                                        <li>📞 Histórico de contatos</li>
+                                        <li>🎯 Preferências alimentares</li>
+                                        <li>📊 Análise de pedidos por cliente</li>
+                                        <li>💳 Formas de pagamento preferenciais</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Settings Tab Content -->
+            <section class="tab-content" id="settings-tab" style="display: none;">
+                <div class="settings-section">
+                    <h2 style="text-align: center;"><i class="fas fa-cogs"></i> Configurações do Sistema</h2>
+                    
+                    <!-- Sub-navigation for Settings section -->
+                    <div class="sub-nav">
+                        <button class="sub-nav-btn active" data-section="backup">
+                            <i class="fas fa-shield-alt"></i> Backup
+                        </button>
+                        <button class="sub-nav-btn" data-section="restaurant">
+                            <i class="fas fa-store"></i> Restaurante
+                        </button>
+                        <button class="sub-nav-btn" data-section="printer">
+                            <i class="fas fa-print"></i> Impressora
+                        </button>
+                    </div>
+
                     <!-- Backup Sub-section -->
-                    <div class="sub-section" id="backup-subsection">
+                    <div class="sub-section active" id="backup-subsection">
                         <div class="backup-section" id="backup-section">
                             <div class="backup-header">
                                 <h3><i class="fas fa-shield-alt"></i> Backup e Restore - Segurança dos Dados</h3>
@@ -650,6 +966,124 @@
                                             <i class="fas fa-info-circle"></i>
                                             Backup criado automaticamente antes da última importação
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Restaurant Sub-section -->
+                    <div class="sub-section" id="restaurant-subsection">
+                        <div class="restaurant-section" id="restaurant-section">
+                            <div class="restaurant-header">
+                                <h3><i class="fas fa-store"></i> Configurações do Restaurante</h3>
+                                <p>Personalize as informações e configurações do seu estabelecimento</p>
+                            </div>
+
+                            <div class="restaurant-config">
+                                <div class="restaurant-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-tag"></i> Informações Básicas</h4>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <div class="form-group">
+                                            <label for="restaurant-name">Nome do Restaurante</label>
+                                            <input type="text" id="restaurant-name" name="restaurantName" placeholder="Digite o nome do restaurante" value="D'Casa & Cia Assados">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="restaurant-phone">Telefone</label>
+                                            <input type="tel" id="restaurant-phone" name="restaurantPhone" placeholder="(00) 00000-0000" value="(11) 99999-9999">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="restaurant-address">Endereço</label>
+                                            <textarea id="restaurant-address" name="restaurantAddress" rows="3" placeholder="Endereço completo do restaurante">Rua Exemplo, 123 - Centro - São Paulo - SP</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="restaurant-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-motorcycle"></i> Configurações de Entrega</h4>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <div class="form-group">
+                                            <label for="default-delivery-fee">Taxa de Entrega Padrão (R$)</label>
+                                            <input type="number" id="default-delivery-fee" name="defaultDeliveryFee" step="0.01" min="0" placeholder="9.00" value="9.00">
+                                        </div>
+                                        
+                                        <div class="restaurant-actions">
+                                            <button class="btn-small primary" id="save-restaurant-config">
+                                                <i class="fas fa-save"></i> Salvar
+                                            </button>
+                                            <button class="btn-small secondary" id="reset-restaurant-config">
+                                                <i class="fas fa-undo"></i> Restaurar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Printer Sub-section -->
+                    <div class="sub-section" id="printer-subsection">
+                        <div class="printer-section" id="printer-section">
+                            <div class="printer-header">
+                                <h3><i class="fas fa-print"></i> Configuração de Impressora</h3>
+                                <p>Selecione a impressora padrão para impressão automática de pedidos</p>
+                            </div>
+
+                            <div class="printer-config">
+                                <div class="printer-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-cog"></i> Impressora Selecionada</h4>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <div class="selected-printer" id="selected-printer">
+                                            <i class="fas fa-print"></i>
+                                            <span id="selected-printer-name">Nenhuma impressora selecionada</span>
+                                        </div>
+                                        
+                                        <div class="printer-buttons">
+                                            <button class="action-btn primary" id="refresh-printers-btn">
+                                                <i class="fas fa-sync-alt"></i> Buscar Impressoras
+                                            </button>
+                                            <button class="action-btn secondary" onclick="window.thermalPrinter?.selectPrinter()">
+                                                <i class="fas fa-cog"></i> Configurar Impressora
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="printer-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-list"></i> Impressoras Disponíveis</h4>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <div class="printer-list" id="printer-list">
+                                            <div class="empty-printers">
+                                                <i class="fas fa-search"></i>
+                                                <p>Clique em "Buscar Impressoras" para ver as impressoras disponíveis</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="printer-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-vial"></i> Teste de Impressão</h4>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <button class="action-btn secondary" id="test-print-standard-btn">
+                                            <i class="fas fa-print"></i> Teste com Tela Padrão
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -798,6 +1232,78 @@
     <div class="print-area" id="print-area" style="display: none;">
         <!-- Content for printing will be populated by JavaScript -->
     </div>
+
+    <!-- Calculator Modal -->
+    <section class="calculator-modal" id="calculator-modal" style="display: none;">
+        <div class="modal-overlay" id="calculator-overlay"></div>
+        <div class="modal-content calculator-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-calculator"></i> Calculadora</h2>
+                <button id="close-calculator" class="close-btn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="calculator">
+                    <div class="calculator-display">
+                        <input type="text" id="calculator-result" readonly value="0">
+                    </div>
+                    <div class="calculator-buttons">
+                        <button class="calc-btn clear" onclick="clearCalculator()">C</button>
+                        <button class="calc-btn clear" onclick="clearEntry()">CE</button>
+                        <button class="calc-btn operator" onclick="deleteLast()">⌫</button>
+                        <button class="calc-btn operator" onclick="appendToCalculator('/')">/</button>
+                        
+                        <button class="calc-btn number" onclick="appendToCalculator('7')">7</button>
+                        <button class="calc-btn number" onclick="appendToCalculator('8')">8</button>
+                        <button class="calc-btn number" onclick="appendToCalculator('9')">9</button>
+                        <button class="calc-btn operator" onclick="appendToCalculator('*')">×</button>
+                        
+                        <button class="calc-btn number" onclick="appendToCalculator('4')">4</button>
+                        <button class="calc-btn number" onclick="appendToCalculator('5')">5</button>
+                        <button class="calc-btn number" onclick="appendToCalculator('6')">6</button>
+                        <button class="calc-btn operator" onclick="appendToCalculator('-')">-</button>
+                        
+                        <button class="calc-btn number" onclick="appendToCalculator('1')">1</button>
+                        <button class="calc-btn number" onclick="appendToCalculator('2')">2</button>
+                        <button class="calc-btn number" onclick="appendToCalculator('3')">3</button>
+                        <button class="calc-btn operator" onclick="appendToCalculator('+')">+</button>
+                        
+                        <button class="calc-btn number zero" onclick="appendToCalculator('0')">0</button>
+                        <button class="calc-btn number" onclick="appendToCalculator('.')">.</button>
+                        <button class="calc-btn equals" onclick="calculateResult()">=</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Confirmation Modal -->
+    <section class="confirmation-modal" id="confirmation-modal" style="display: none;">
+        <div class="modal-overlay" id="confirmation-overlay"></div>
+        <div class="modal-content confirmation-content">
+            <div class="modal-header">
+                <h2 id="confirmation-title"><i class="fas fa-question-circle"></i> Confirmação</h2>
+            </div>
+            
+            <div class="modal-body">
+                <div class="confirmation-message">
+                    <div class="confirmation-icon" id="confirmation-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <p id="confirmation-text">Tem certeza que deseja realizar esta ação?</p>
+                </div>
+            </div>
+            
+            <div class="modal-footer confirmation-footer">
+                <button id="confirmation-cancel" class="cancel-btn">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button id="confirmation-confirm" class="confirm-btn">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </section>
 
     <script src="script.js"></script>
 </body>
